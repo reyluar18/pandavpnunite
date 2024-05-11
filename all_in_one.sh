@@ -699,7 +699,7 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
     update-alternatives --set c++ /usr/bin/g++
     cd /usr/src
-    wget https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/squid-3.1.23.tar.gz
+    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid-3.1.23.tar.gz
     tar zxvf squid-3.1.23.tar.gz
     cd squid-3.1.23
     ./configure --prefix=/usr \
@@ -713,7 +713,7 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
       --with-pidfile=/var/run/squid.pid
     make -j$(nproc)
     make install
-    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/squid.sh
+    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid.sh
     chmod +x /etc/init.d/squid
     update-rc.d squid defaults
     chown -cR proxy /var/log/squid
@@ -742,7 +742,7 @@ error_directory /usr/share/squid/errors/English' >> squid.conf
     chmod 755 *
     /etc/init.d/squid start
 cd /etc || exit
-wget 'https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/socks.py' -O /etc/socks.py
+wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks.py' -O /etc/socks.py
 dos2unix /etc/socks.py
 chmod +x /etc/socks.py
 rm /etc/apt/sources.list
@@ -866,15 +866,15 @@ sed -i "s|DBUSER|$USER|g" /etc/openvpn/login/config.sh
 sed -i "s|DBPASS|$PASS|g" /etc/openvpn/login/config.sh
 sed -i "s|DBNAME|$DBNAME|g" /etc/openvpn/login/config.sh
 
-wget -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/auth_vpn"
+wget -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/auth_vpn"
 
 #client-connect file
-wget -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/connect"
+wget -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/connect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/connect.sh
 
 #TCP client-disconnect file
-wget -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/disconnect"
+wget -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/disconnect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/disconnect.sh
 
@@ -1217,7 +1217,7 @@ install_hysteria(){
 clear
 echo 'Installing hysteria.'
 {
-wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/hysteria.sh; chmod +x ~/hysteria.sh; ./hysteria.sh --version v1.3.5
+wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria.sh; chmod +x ~/hysteria.sh; ./hysteria.sh --version v1.3.5
 
 rm -f /etc/hysteria/config.json
 
@@ -1241,7 +1241,7 @@ chmod 755 /etc/hysteria/config.json
 sysctl -w net.core.rmem_max=16777216
 sysctl -w net.core.wmem_max=16777216
 
-wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar018/pandavpnunite/main/badvpn-udpgw64"
+wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
 chmod +x /usr/bin/badvpn-udpgw
 ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
 } &>/dev/null
