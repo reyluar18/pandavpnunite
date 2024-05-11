@@ -1384,17 +1384,17 @@ exit 0' >> /etc/rc.local
     mkdir -m 777 /root/.web
 echo "Installation success: Pandavpnunite... " >> /root/.web/index.php
 
-echo "tcp_port=TCP_PORT
+echo "
+tcp_port=TCP_PORT
 udp_port=UDP_PORT
-socket_port=80
 squid_port=8080
 hysteria_port=5666
-tcp_ssl_port=1194
 dropbear_port=442
 ssh=22
 websocket-ssh=80
-websocket-ssl=443
-stunnel=443
+openvpn-tcp-ssl=443
+openvpn-udp-ssl=444
+dropbear-ssl=445
 slowdns=2222 | SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 | NAMESERVER = _NAME_SERVER_
 " >> /root/.ports
 
