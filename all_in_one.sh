@@ -25,7 +25,6 @@ echo '#############################################
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 read -p "Please enter ns host for Slowdns: " NS
-echo $NS > /root/ns.txt
 
 install_require () {
 
@@ -63,15 +62,13 @@ EOM
 
 chmod -x /etc/update-motd.d/*
 chmod +x /etc/update-motd.d/01-custom
-rm /etc/motd
+rm -f /etc/motd
 touch /etc/motd.tail
 
-sed -i 's/Listen 80/Listen 81/g' /etc/apache2/ports.conf
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
-systemctl restart apache2
 service dropbear restart
 
 }
@@ -80,12 +77,10 @@ install_websocket_and_socks(){
 wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
 dos2unix /usr/local/sbin/websocket.py
 chmod +x /usr/local/sbin/websocket.py
-websocket
 
 wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
 dos2unix /usr/local/sbin/websocket.py
 chmod +x /usr/local/sbin/websocket.py
-socksocserv
 
 }
 
@@ -112,7 +107,7 @@ EOM
 cat <<EOM > /root/dnstt/dnstt-server/server.pub
 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
 EOM
-
+echo $NS > /root/ns.txt
 NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $NSNAME 127.0.0.1:442
@@ -858,7 +853,7 @@ ExecStart=/bin/bash /etc/rc.local
 RemainAfterExit=yes
 
 [Install]
-WantedBy=multi-user.target" >> /etc/systemd/system/michaele.service
+WantedBy=multi-user.target" >> /etc/systemd/system/pandavpnunite.service
     echo '#!/bin/sh -e
 service ufw stop
 iptables-restore < /etc/iptables_rules.v4
@@ -875,8 +870,8 @@ bash /etc/hysteria/online.sh
 exit 0' >> /etc/rc.local
     sudo chmod +x /etc/rc.local
     systemctl daemon-reload
-    sudo systemctl enable michaele
-    sudo systemctl start michaele.service
+    sudo systemctl enable pandavpnunite
+    sudo systemctl start pandavpnunite.service
     
     mkdir -m 777 /root/.web
 echo "Installation success: Pandavpnunite... " >> /root/.web/index.php
@@ -916,7 +911,7 @@ clear
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
 history -c;
-rm /etc/.systemlink
+rm -r /etc/.systemlink
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '#############################################
 #         Authentication file system        #
