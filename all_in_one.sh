@@ -31,13 +31,13 @@ install_require () {
 
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y curl wget cron python-minimal libpython-stdlib
+apt install -y curl wget cron python2 libpython2-stdlib
 apt install -y iptables
 apt install -y openvpn netcat httpie php neofetch vnstat
-apt install -y screen squid stunnel4 dropbear gnutls-bin python python2
+apt install -y screen squid stunnel4 dropbear gnutls-bin python
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
 apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
-mkdir /etc/update-motd.d
+mkdir -p /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 apt-get install lsof git -y
 
@@ -77,521 +77,18 @@ service dropbear restart
 }
 
 install_websocket_and_socks(){
-cat << \websocket > /usr/local/sbin/websocket.py
-import socket, threading, thread, select, signal, sys, time, getopt
-
-# Listen
-LISTENING_ADDR = '0.0.0.0'
-if sys.argv[1:]:
-  LISTENING_PORT = sys.argv[1]
-else:
-  LISTENING_PORT = 80  
-#Pass
-PASS = ''
-
-# CONST
-BUFLEN = 4096 * 4
-TIMEOUT = 60
-DEFAULT_HOST = '127.0.0.1:442'
-RESPONSE = 'HTTP/1.1 101 <font color="red">Panda VPN Unite</font>\r\n\r\nContent-Length: 104857600000\r\n\r\n'
-
-class Server(threading.Thread):
-    def __init__(self, host, port):
-        threading.Thread.__init__(self)
-        self.running = False
-        self.host = host
-        self.port = port
-        self.threads = []
-        self.threadsLock = threading.Lock()
-        self.logLock = threading.Lock()
-
-    def run(self):
-        self.soc = socket.socket(socket.AF_INET)
-        self.soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.soc.settimeout(2)
-        intport = int(self.port)
-        self.soc.bind((self.host, intport))
-        self.soc.listen(0)
-        self.running = True
-
-        try:
-            while self.running:
-                try:
-                    c, addr = self.soc.accept()
-                    c.setblocking(1)
-                except socket.timeout:
-                    continue
-
-                conn = ConnectionHandler(c, self, addr)
-                conn.start()
-                self.addConn(conn)
-        finally:
-            self.running = False
-            self.soc.close()
-
-    def printLog(self, log):
-        self.logLock.acquire()
-        print log
-        self.logLock.release()
-
-    def addConn(self, conn):
-        try:
-            self.threadsLock.acquire()
-            if self.running:
-                self.threads.append(conn)
-        finally:
-            self.threadsLock.release()
-
-    def removeConn(self, conn):
-        try:
-            self.threadsLock.acquire()
-            self.threads.remove(conn)
-        finally:
-            self.threadsLock.release()
-
-    def close(self):
-        try:
-            self.running = False
-            self.threadsLock.acquire()
-
-            threads = list(self.threads)
-            for c in threads:
-                c.close()
-        finally:
-            self.threadsLock.release()
-
-
-class ConnectionHandler(threading.Thread):
-    def __init__(self, socClient, server, addr):
-        threading.Thread.__init__(self)
-        self.clientClosed = False
-        self.targetClosed = True
-        self.client = socClient
-        self.client_buffer = ''
-        self.server = server
-        self.log = 'Connection: ' + str(addr)
-
-    def close(self):
-        try:
-            if not self.clientClosed:
-                self.client.shutdown(socket.SHUT_RDWR)
-                self.client.close()
-        except:
-            pass
-        finally:
-            self.clientClosed = True
-
-        try:
-            if not self.targetClosed:
-                self.target.shutdown(socket.SHUT_RDWR)
-                self.target.close()
-        except:
-            pass
-        finally:
-            self.targetClosed = True
-
-    def run(self):
-        try:
-            self.client_buffer = self.client.recv(BUFLEN)
-
-            hostPort = self.findHeader(self.client_buffer, 'X-Real-Host')
-
-            if hostPort == '':
-                hostPort = DEFAULT_HOST
-
-            split = self.findHeader(self.client_buffer, 'X-Split')
-
-            if split != '':
-                self.client.recv(BUFLEN)
-
-            if hostPort != '':
-                passwd = self.findHeader(self.client_buffer, 'X-Pass')
-				
-                if len(PASS) != 0 and passwd == PASS:
-                    self.method_CONNECT(hostPort)
-                elif len(PASS) != 0 and passwd != PASS:
-                    self.client.send('HTTP/1.1 400 WrongPass!\r\n\r\n')
-                elif hostPort.startswith('127.0.0.1') or hostPort.startswith('localhost'):
-                    self.method_CONNECT(hostPort)
-                else:
-                    self.client.send('HTTP/1.1 403 Forbidden!\r\n\r\n')
-            else:
-                print '- No X-Real-Host!'
-                self.client.send('HTTP/1.1 400 NoXRealHost!\r\n\r\n')
-
-        except Exception as e:
-            self.log += ' - error: ' + e.strerror
-            self.server.printLog(self.log)
-	    pass
-        finally:
-            self.close()
-            self.server.removeConn(self)
-
-    def findHeader(self, head, header):
-        aux = head.find(header + ': ')
-
-        if aux == -1:
-            return ''
-
-        aux = head.find(':', aux)
-        head = head[aux+2:]
-        aux = head.find('\r\n')
-
-        if aux == -1:
-            return ''
-
-        return head[:aux];
-
-    def connect_target(self, host):
-        i = host.find(':')
-        if i != -1:
-            port = int(host[i+1:])
-            host = host[:i]
-        else:
-            if self.method=='CONNECT':
-                port = 442
-            else:
-                port = sys.argv[1]
-
-        (soc_family, soc_type, proto, _, address) = socket.getaddrinfo(host, port)[0]
-
-        self.target = socket.socket(soc_family, soc_type, proto)
-        self.targetClosed = False
-        self.target.connect(address)
-
-    def method_CONNECT(self, path):
-        self.log += ' - CONNECT ' + path
-
-        self.connect_target(path)
-        self.client.sendall(RESPONSE)
-        self.client_buffer = ''
-
-        self.server.printLog(self.log)
-        self.doCONNECT()
-
-    def doCONNECT(self):
-        socs = [self.client, self.target]
-        count = 0
-        error = False
-        while True:
-            count += 1
-            (recv, _, err) = select.select(socs, [], socs, 3)
-            if err:
-                error = True
-            if recv:
-                for in_ in recv:
-		    try:
-                        data = in_.recv(BUFLEN)
-                        if data:
-			    if in_ is self.target:
-				self.client.send(data)
-                            else:
-                                while data:
-                                    byte = self.target.send(data)
-                                    data = data[byte:]
-
-                            count = 0
-			else:
-			    break
-		    except:
-                        error = True
-                        break
-            if count == TIMEOUT:
-                error = True
-            if error:
-                break
-
-
-def print_usage():
-    print 'Usage: proxy.py -p <port>'
-    print '       proxy.py -b <bindAddr> -p <port>'
-    print '       proxy.py -b 0.0.0.0 -p 80'
-
-def parse_args(argv):
-    global LISTENING_ADDR
-    global LISTENING_PORT
-    
-    try:
-        opts, args = getopt.getopt(argv,"hb:p:",["bind=","port="])
-    except getopt.GetoptError:
-        print_usage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print_usage()
-            sys.exit()
-        elif opt in ("-b", "--bind"):
-            LISTENING_ADDR = arg
-        elif opt in ("-p", "--port"):
-            LISTENING_PORT = int(arg)
-
-
-def main(host=LISTENING_ADDR, port=LISTENING_PORT):
-    print "\n:-------PythonProxy-------:\n"
-    print "Listening addr: " + LISTENING_ADDR
-    print "Listening port: " + str(LISTENING_PORT) + "\n"
-    print ":-------------------------:\n"
-    server = Server(LISTENING_ADDR, LISTENING_PORT)
-    server.start()
-    while True:
-        try:
-            time.sleep(2)
-        except KeyboardInterrupt:
-            print 'Stopping...'
-            server.close()
-            break
-
-#######    parse_args(sys.argv[1:])
-if __name__ == '__main__':
-    main()
-
+wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
+dos2unix /usr/local/sbin/websocket.py
+chmod +x /usr/local/sbin/websocket.py
 websocket
 
-cat << \socksocserv > /usr/local/sbin/proxy.py
-#!/usr/bin/env python3
-# encoding: utf-8
-# SocksProxy Mod By: Panda VPN Unite
-import socket, threading, thread, select, signal, sys, time
-from os import system
-system("clear")
-#conexao
-IP = '0.0.0.0'
-try:
-   PORT = int(sys.argv[1])
-except:
-   PORT = 8000
-PASS = ''
-BUFLEN = 8196 * 8
-TIMEOUT = 60
-MSG = 'Powered by: Panda VPN Unite'
-DEFAULT_HOST = '0.0.0.0:442'
-RESPONSE = "HTTP/1.1 200 " + str(MSG) + "\r\n\r\n"
-
-class Server(threading.Thread):
-    def __init__(self, host, port):
-        threading.Thread.__init__(self)
-        self.running = False
-        self.host = host
-        self.port = port
-        self.threads = []
-	self.threadsLock = threading.Lock()
-	self.logLock = threading.Lock()
-
-    def run(self):
-        self.soc = socket.socket(socket.AF_INET)
-        self.soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.soc.settimeout(2)
-        self.soc.bind((self.host, self.port))
-        self.soc.listen(0)
-        self.running = True
-
-        try:                    
-            while self.running:
-                try:
-                    c, addr = self.soc.accept()
-                    c.setblocking(1)
-                except socket.timeout:
-                    continue
-                
-                conn = ConnectionHandler(c, self, addr)
-                conn.start();
-                self.addConn(conn)
-        finally:
-            self.running = False
-            self.soc.close()
-            
-    def printLog(self, log):
-        self.logLock.acquire()
-        print log
-        self.logLock.release()
-	
-    def addConn(self, conn):
-        try:
-            self.threadsLock.acquire()
-            if self.running:
-                self.threads.append(conn)
-        finally:
-            self.threadsLock.release()
-                    
-    def removeConn(self, conn):
-        try:
-            self.threadsLock.acquire()
-            self.threads.remove(conn)
-        finally:
-            self.threadsLock.release()
-                
-    def close(self):
-        try:
-            self.running = False
-            self.threadsLock.acquire()
-            
-            threads = list(self.threads)
-            for c in threads:
-                c.close()
-        finally:
-            self.threadsLock.release()
-			
-
-class ConnectionHandler(threading.Thread):
-    def __init__(self, socClient, server, addr):
-        threading.Thread.__init__(self)
-        self.clientClosed = False
-        self.targetClosed = True
-        self.client = socClient
-        self.client_buffer = ''
-        self.server = server
-        self.log = 'Conexao: ' + str(addr)
-
-    def close(self):
-        try:
-            if not self.clientClosed:
-                self.client.shutdown(socket.SHUT_RDWR)
-                self.client.close()
-        except:
-            pass
-        finally:
-            self.clientClosed = True
-            
-        try:
-            if not self.targetClosed:
-                self.target.shutdown(socket.SHUT_RDWR)
-                self.target.close()
-        except:
-            pass
-        finally:
-            self.targetClosed = True
-
-    def run(self):
-        try:
-            self.client_buffer = self.client.recv(BUFLEN)
-        
-            hostPort = self.findHeader(self.client_buffer, 'X-Real-Host')
-            
-            if hostPort == '':
-                hostPort = DEFAULT_HOST
-
-            split = self.findHeader(self.client_buffer, 'X-Split')
-
-            if split != '':
-                self.client.recv(BUFLEN)
-            
-            if hostPort != '':
-                passwd = self.findHeader(self.client_buffer, 'X-Pass')
-				
-                if len(PASS) != 0 and passwd == PASS:
-                    self.method_CONNECT(hostPort)
-                elif len(PASS) != 0 and passwd != PASS:
-                    self.client.send('HTTP/1.1 400 WrongPass!\r\n\r\n')
-                if hostPort.startswith(IP):
-                    self.method_CONNECT(hostPort)
-                else:
-                   self.client.send('HTTP/1.1 403 Forbidden!\r\n\r\n')
-            else:
-                print '- No X-Real-Host!'
-                self.client.send('HTTP/1.1 400 NoXRealHost!\r\n\r\n')
-
-        except Exception as e:
-            self.log += ' - error: ' + e.strerror
-            self.server.printLog(self.log)
-	    pass
-        finally:
-            self.close()
-            self.server.removeConn(self)
-
-    def findHeader(self, head, header):
-        aux = head.find(header + ': ')
-    
-        if aux == -1:
-            return ''
-
-        aux = head.find(':', aux)
-        head = head[aux+2:]
-        aux = head.find('\r\n')
-
-        if aux == -1:
-            return ''
-
-        return head[:aux];
-
-    def connect_target(self, host):
-        i = host.find(':')
-        if i != -1:
-            port = int(host[i+1:])
-            host = host[:i]
-        else:
-            if self.method=='CONNECT':
-                port = 110
-            else:
-                port = 22
-
-        (soc_family, soc_type, proto, _, address) = socket.getaddrinfo(host, port)[0]
-
-        self.target = socket.socket(soc_family, soc_type, proto)
-        self.targetClosed = False
-        self.target.connect(address)
-
-    def method_CONNECT(self, path):
-    	self.log += ' - CONNECT ' + path
-        self.connect_target(path)
-        self.client.sendall(RESPONSE)
-        self.client_buffer = ''
-        self.server.printLog(self.log)
-        self.doCONNECT()
-                    
-    def doCONNECT(self):
-        socs = [self.client, self.target]
-        count = 0
-        error = False
-        while True:
-            count += 1
-            (recv, _, err) = select.select(socs, [], socs, 3)
-            if err:
-                error = True
-            if recv:
-                for in_ in recv:
-		    try:
-                        data = in_.recv(BUFLEN)
-                        if data:
-			    if in_ is self.target:
-				self.client.send(data)
-                            else:
-                                while data:
-                                    byte = self.target.send(data)
-                                    data = data[byte:]
-
-                            count = 0
-			else:
-			    break
-		    except:
-                        error = True
-                        break
-            if count == TIMEOUT:
-                error = True
-
-            if error:
-                break
-
-
-
-def main(host=IP, port=PORT):
-    print "\033[0;34mâ”"*8,"\033[1;32m PROXY SOCKS","\033[0;34mâ”"*8,"\n"
-    print "\033[1;33mIP:\033[1;32m " + IP
-    print "\033[1;33mPORTA:\033[1;32m " + str(PORT) + "\n"
-    print "\033[0;34mâ”"*10,"\033[1;32m Panda VPN Unite","\033[0;34mâ”\033[1;37m"*11,"\n"
-    server = Server(IP, PORT)
-    server.start()
-    while True:
-        try:
-            time.sleep(2)
-        except KeyboardInterrupt:
-            print '\nClosing...'
-            server.close()
-            break
-if __name__ == '__main__':
-    main()
+wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
+dos2unix /usr/local/sbin/websocket.py
+chmod +x /usr/local/sbin/websocket.py
 socksocserv
 
 }
+
 
 install_dnstt(){
 
@@ -608,11 +105,11 @@ cd /root/dnstt/dnstt-server
 go build
 ./dnstt-server -gen-key -privkey-file server.key -pubkey-file server.pub
 
-cat <<\EOM > /root/dnstt/dnstt-server/server.key
+cat <<EOM > /root/dnstt/dnstt-server/server.key
 124d51aed2abceb984978cfe73bbfaa1b74ec0be869510ac254efc6e9ec7addc
 EOM
 
-cat <<\EOM > /root/dnstt/dnstt-server/server.pub
+cat <<EOM > /root/dnstt/dnstt-server/server.pub
 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
 EOM
 
@@ -620,7 +117,7 @@ NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $NSNAME 127.0.0.1:442
 
-cat <<\EOM > /bin/dnsttauto.sh
+cat <<EOM > /bin/dnsttauto.sh
 sudo kill $( sudo lsof -i:5300 -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
@@ -631,7 +128,7 @@ EOM
 
 execute_to_screen(){
     
-cat <<\EOM >/root/auto
+cat <<EOM >/root/auto
 #!/bin/bash
 
 if nc -z localhost 80; then
@@ -853,7 +350,7 @@ verb 3' > /etc/openvpn/server2.conf
 
 sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/openvpn/server2.conf
 
-cat <<\EOM >/etc/openvpn/login/config.sh
+cat <<EOM >/etc/openvpn/login/config.sh
 #!/bin/bash
 HOST='DBHOST'
 USER='DBUSER'
