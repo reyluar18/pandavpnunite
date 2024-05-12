@@ -10,7 +10,7 @@ rm -rf all_in_one.sh*
 
 #PORT OPENVPN
 PORT_TCP='1194';
-PORT_UDP='53';
+PORT_UDP='54';
 
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
@@ -910,6 +910,7 @@ sudo systemctl restart cron
 clear
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
+service openvpn restart
 history -c;
 rm -r /etc/.systemlink
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
