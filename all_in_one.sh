@@ -54,7 +54,7 @@ exec 2>&1
 LOLCAT=/usr/games/lolcat
 
 # UPPERCASE HOSTNAME, APPLY FIGLET FONT "block" AND CENTERING
-INFO_HOST=$(echo YMODIFIED | awk '{print toupper($0)}' | figlet -tc -f block)
+INFO_HOST=$(echo PANDA-UNITE | awk '{print toupper($0)}' | figlet -tc -f block)
 
 # RUN IT ALL THROUGH lolcat FOR COLORING
 printf "%s\n%s\n" "$INFO_HOST" | $LOLCAT -f
