@@ -130,20 +130,13 @@ if nc -z localhost 80; then
     echo "WebSocket is running"
 else
     echo "Starting WebSocket"
-    screen -dmS websocket python /usr/local/sbin/websocket.py 80
+    screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 fi
 
 if nc -z localhost 8080; then
     echo "Squid Proxy Running"
 else
     echo "Starting Port 8080"
-    screen -dmS proxy python /usr/local/sbin/proxy.py 8080
-fi
-
-if nc -z localhost 8010; then
-    echo "Squid Proxy Running"
-else
-    echo "Starting Port 8010"
     screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 fi
 
@@ -215,6 +208,7 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
     echo "acl PandaVPNUnite dst `curl -s https://api.ipify.org`" >> squid.conf
     echo 'http_port 8080
 http_port 8181
+http_port 3128
 visible_hostname Proxy
 acl PURGE method PURGE
 acl HEAD method HEAD
