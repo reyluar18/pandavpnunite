@@ -264,8 +264,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher none
-auth none
+cipher AES-128-GCM
+auth SHA256
 persist-key
 persist-tun
 ping-timer-rem
@@ -308,8 +308,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher none
-auth none
+cipher AES-128-GCM
+auth SHA256
 persist-key
 persist-tun
 ping-timer-rem
@@ -904,7 +904,9 @@ sudo systemctl restart cron
 clear
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
-service openvpn restart
+service squid restart
+service stunnel4 restart
+
 history -c;
 rm -r /etc/.systemlink
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
