@@ -8,9 +8,31 @@ DBNAME='daddyjoh_pandavpn_unity'
 
 rm -rf all_in_one.sh*
 
+#PORT SQUID
+PORT_SQUID_1='3128'
+PORT_SQUID_2='8080'
+PORT_SQUID_3='8181'
+
+#PYTHON PROXY 
+PORT_SOCKS='80'
+PORT_WEBSOCKET='8081'
+PORT_PYPROXY='8010'
+
 #PORT OPENVPN
 PORT_TCP='1194';
 PORT_UDP='54';
+
+#SSL
+PORT_OPENVPN_TCP_SSL='443'
+PORT_OPENVPN_UDP_SSL='444'
+PORT_DROPBEAR_SSL='445'
+PORT_SSH_SSL='446'
+
+#OTHERS
+PORT_DROPBEAR='442'
+PORT_HYSTERIA='5666'
+PORT_DNSTT='5300'
+PORT_SLOWDNS='2222'
 
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
@@ -139,27 +161,9 @@ else
     echo "Starting Port 8080"
     screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 fi
-
-if nc -z localhost 443; then
-    echo "stunnel running"
-else
-    echo "stunnel not running"
-    systemctl restart stunnel4
-fi
-
-if nc -z localhost 7300; then
-    echo "badvpn running"
-else
-    echo "Starting Badvpn"
-    screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-fi
-sudo sync; echo 3 > /proc/sys/vm/drop_caches
-swapoff -a && swapon -a
-echo "Ram Cleaned!"
 EOM
 
 bash /root/auto
-
 }
 
 install_squid(){
@@ -874,25 +878,36 @@ exit 0' >> /etc/rc.local
 echo "Installation success: Pandavpnunite... " >> /root/.web/index.php
 
 echo "
-tcp_port=TCP_PORT
-udp_port=UDP_PORT
-squid_port=8080
-hysteria_port=5666
-dropbear_port=442
-ssh=22
-websocket-ssh=80
-openvpn-tcp-ssl=443
-openvpn-udp-ssl=444
-dropbear-ssl=445
-slowdns=2222 | SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 | NAMESERVER = _NAME_SERVER_
+PORT_SQUID_1='3128'
+PORT_SQUID_2='8080'
+PORT_SQUID_3='8181'
+
+#PYTHON PROXY 
+PORT_SOCKS='80'
+PORT_WEBSOCKET='8081'
+PORT_PYPROXY='8010'
+
+#PORT OPENVPN
+PORT_TCP='1194';
+PORT_UDP='54';
+
+#SSL
+PORT_OPENVPN_TCP_SSL='443'
+PORT_OPENVPN_UDP_SSL='444'
+PORT_DROPBEAR_SSL='445'
+PORT_SSH_SSL='446'
+
+#OTHERS
+PORT_DROPBEAR='442'
+PORT_HYSTERIA='5666'
+PORT_DNSTT (SLOWDNS) ='5300' | SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 | NAMESERVER = _NAME_SERVER_
 " >> /root/.ports
 
-sed -i "s|TCP_PORT|$PORT_TCP|g" /root/.ports
-sed -i "s|UDP_PORT|$PORT_UDP|g" /root/.ports
 sed -i "s|_NAME_SERVER_|$NS|g" /root/.ports
-sed -i "s|SERVERIP|$server_ip|g" /etc/.counter
+
   }&>/dev/null
 }
+
 start_service () {
 clear
 echo 'Starting..'
@@ -905,10 +920,18 @@ sudo crontab -l | { echo "SHELL=/bin/bash
 sudo systemctl restart cron
 } &>/dev/null
 clear
+service dropbear restart
+service stunnel4 restart
+service squid restart 
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
-service squid restart
-service stunnel4 restart
+systemctl restart openvpn@server.service
+systemctl restart openvpn@server2.service   
+screen -dmS socks python /etc/socks.py 80
+screen -dmS websocket python /usr/local/sbin/websocket.py 8081
+screen -dmS proxy python /usr/local/sbin/proxy.py 8010
+screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
+screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :5300 -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:442
 
 history -c;
 rm -r /etc/.systemlink
@@ -928,6 +951,24 @@ view_ports(){
 cat /root/.ports
 }
 
+server_authentication(){
+    mkdir -p /etc/authorization/pandavpnunite
+    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/server_auth.sh -O /etc/authorization/pandavpnunite/server_auth.sh
+    chmod +x /etc/authorization/pandavpnunite/server_auth.sh
+
+    #dropbear
+    echo "
+DROPBEAR_CUSTOM_AUTH="/etc/authorization/pandavpnunite/server_auth.sh"
+    " >> /etc/default/dropbear
+    sudo service dropbear restart
+
+    #sshd
+    sed -i "s|#AuthorizedKeysCommand none|AuthorizedKeysCommand /etc/authorization/pandavpnunite/server_auth.sh|g" /etc/ssh/sshd_config
+    sed -i "s|#AuthorizedKeysCommandUser nobody|AuthorizedKeysCommandUser root|g" /etc/ssh/sshd_config
+    sudo service sshd restart
+
+}   
+
 install_require
 install_hysteria
 setup_ssl
@@ -939,6 +980,8 @@ install_rclocal
 install_dropbear
 install_websocket_and_socks
 install_dnstt
+# server_authentication
 view_ports
 start_service
 execute_to_screen
+
