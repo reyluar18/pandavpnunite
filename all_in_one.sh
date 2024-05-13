@@ -104,7 +104,7 @@ echo "Installing websocket and socks"
     wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
     dos2unix /usr/local/sbin/websocket.py
     chmod +x /usr/local/sbin/websocket.py
-}
+}&>/dev/null
 
 
 }
@@ -145,7 +145,7 @@ nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $nsname 127.0.0.1:$PORT_DROPBEAR
 EOM
-}
+}&>/dev/null
 
 
 }
@@ -575,8 +575,8 @@ chmod 755 /etc/openvpn/login/auth_vpn
 
 install_firewall_kvm () {
 clear
-#echo "Installing iptables."
-
+echo "Installing iptables."
+{
 echo "net.ipv4.conf.default.rp_filter = 1
 net.ipv4.conf.default.accept_source_route = 0
 kernel.sysrq = 0
@@ -625,7 +625,7 @@ iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state N
 iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state NEW -m recent --set --name DEFAULT --mask 255.255.255.255 --rsource
 iptables-save > /etc/iptables_rules.v4
 ip6tables-save > /etc/iptables_rules.v6
-#}&>/dev/null
+}&>/dev/null
 }
 
 install_stunnel() {
@@ -926,7 +926,7 @@ screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
 
-rm -r /etc/.systemlink
+rm -f /etc/.systemlink
 echo 'DNS=1.1.1.1
 DNSStubListener=no' >> /etc/resolv.conf
 sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
