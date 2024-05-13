@@ -227,9 +227,9 @@ icp_access allow all
 always_direct allow all
 visible_hostname PandaVPNUnite-Proxy
 error_directory /usr/share/squid/errors/English' >> squid.conf
-    sed -i "s|SQUID_PORT_1|$PORT_SQUID1|g" squid.conf
-    sed -i "s|SQUID_PORT_2|$PORT_SQUID2|g" squid.conf
-    sed -i "s|SQUID_PORT_3|$PORT_SQUID3|g" squid.conf
+    sed -i "s|SQUID_PORT_1|$PORT_SQUID_1|g" squid.conf
+    sed -i "s|SQUID_PORT_2|$PORT_SQUID_2|g" squid.conf
+    sed -i "s|SQUID_PORT_3|$PORT_SQUID_3|g" squid.conf
     cd /usr/share/squid/errors/English
     rm ERR_INVALID_URL
     echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
@@ -672,7 +672,7 @@ dpvCQlKoCRjZ/+OfUaanzYQSDrxdTSN8RtJhCZtd45QbxEXzHTEaICXLuXL6cmv7
 tMuhgUoefS17gv1jqj/C9+6ogMVa+U7QqOvL5A7hbevHdF/k/TMn+qx4UdhrbL5Q
 enL3UGT+BhRAPiA1I5CcG29RqjCzQoaCNg==
 -----END CERTIFICATE-----" >> stunnel.pem
-
+rm -f stunnel.conf
 echo "debug = 0
 output = /tmp/stunnel.log
 cert = /etc/stunnel/stunnel.pem
