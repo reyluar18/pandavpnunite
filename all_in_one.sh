@@ -143,7 +143,7 @@ cat <<EOM > /bin/dnsttauto.sh
 sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $nsname 127.0.0.1:$PORT_DROPBEAR
+screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:$PORT_DROPBEAR
 EOM
 }&>/dev/null
 
@@ -919,12 +919,13 @@ service squid restart
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
 systemctl restart openvpn@server.service
-systemctl restart openvpn@server2.service   
+systemctl restart openvpn@server2.service  
+killall screen 
 screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
+screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
 
 rm -f /etc/.systemlink
 echo 'DNS=1.1.1.1
