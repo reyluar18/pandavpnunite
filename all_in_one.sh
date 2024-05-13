@@ -923,7 +923,7 @@ killall screen
 screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
-screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
+screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
 
 cat /root/.ports
