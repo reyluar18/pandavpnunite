@@ -32,7 +32,6 @@ PORT_SSH_SSL='446'
 PORT_DROPBEAR='442'
 PORT_HYSTERIA='5666'
 PORT_DNSTT='5300'
-PORT_SLOWDNS='2222'
 
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
@@ -88,7 +87,7 @@ rm -f /etc/motd
 touch /etc/motd.tail
 
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
+sed -i "s|DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_WEBSOCKET|g" /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
 service dropbear restart
@@ -132,13 +131,13 @@ EOM
 echo $NS > /root/ns.txt
 NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $NSNAME 127.0.0.1:442
+screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $NSNAME 127.0.0.1:$PORT_DROPBEAR
 
 cat <<EOM > /bin/dnsttauto.sh
-sudo kill $( sudo lsof -i:5300 -t )
+sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $nsname 127.0.0.1:442
+screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $nsname 127.0.0.1:$PORT_DROPBEAR
 EOM
 
 }
@@ -148,20 +147,22 @@ execute_to_screen(){
 cat <<EOM >/root/auto
 #!/bin/bash
 
-if nc -z localhost 80; then
+if nc -z localhost PORT_WEBSOCKET; then
     echo "WebSocket is running"
 else
     echo "Starting WebSocket"
-    screen -dmS websocket python /usr/local/sbin/websocket.py 8081
+    screen -dmS websocket python /usr/local/sbin/websocket.py PORT_WEBSOCKET
 fi
 
-if nc -z localhost 8080; then
-    echo "Squid Proxy Running"
+if nc -z localhost PORT_PYPROXY; then
+    echo "Python Proxy Running"
 else
-    echo "Starting Port 8080"
-    screen -dmS proxy python /usr/local/sbin/proxy.py 8010
+    echo "Starting Port PORT_PYPROXY"
+    screen -dmS proxy python /usr/local/sbin/proxy.py PORT_PYPROXY
 fi
 EOM
+sed -i "s|PORT_WEBSOCKET|$PORT_WEBSOCKET|g" /root/auto
+sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /root/auto
 
 bash /root/auto
 }
@@ -210,9 +211,9 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
     cd /etc/squid/
     rm squid.conf
     echo "acl PandaVPNUnite dst `curl -s https://api.ipify.org`" >> squid.conf
-    echo 'http_port 8080
-http_port 8181
-http_port 3128
+    echo 'http_port SQUID_PORT_1
+http_port SQUID_PORT_2
+http_port SQUID_PORT_3
 visible_hostname Proxy
 acl PURGE method PURGE
 acl HEAD method HEAD
@@ -226,6 +227,9 @@ icp_access allow all
 always_direct allow all
 visible_hostname PandaVPNUnite-Proxy
 error_directory /usr/share/squid/errors/English' >> squid.conf
+    sed -i "s|SQUID_PORT_1|$PORT_SQUID1|g" squid.conf
+    sed -i "s|SQUID_PORT_2|$PORT_SQUID2|g" squid.conf
+    sed -i "s|SQUID_PORT_3|$PORT_SQUID3|g" squid.conf
     cd /usr/share/squid/errors/English
     rm ERR_INVALID_URL
     echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
@@ -678,21 +682,27 @@ socket = l:TCP_NODELAY=1
 socket = r:TCP_NODELAY=1
 
 [sshd]
-accept = 446
+accept = PORT_SSH_SSL
 connect = 127.0.0.1:22
 [dropbear]
-accept = 445
-connect = 127.0.0.1:442
+accept = PORT_DROPBEAR_SSL
+connect = 127.0.0.1:PORT_DROPBEAR
 [openvpn-tcp]
 connect = PORT_TCP  
-accept = 443 
+accept = PORT_OPENVPN_TCP_SSL 
 [openvpn-udp]
 connect = PORT_UDP
-accept = 444
+accept = PORT_OPENVPN_UDP_SSL
 " >> stunnel.conf
 
 sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_SSH_SSL|$PORT_SSH_SSL|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_DROPBEAR_SSL|$PORT_DROPBEAR_SSL|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_DROPBEAR|$PORT_DROPBEAR|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_OPENVPN_TCP_SSL|$PORT_OPENVPN_TCP_SSL|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_OPENVPN_UDP_SSL|$PORT_OPENVPN_UDP_SSL|g" /etc/stunnel/stunnel.conf
+
 cd /etc/default && rm stunnel4
 
 echo 'ENABLED=1
@@ -715,7 +725,7 @@ wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent
 rm -f /etc/hysteria/config.json
 
 echo '{
-  "listen": ":5666",
+  "listen": ":PORT_HYSTERIA",
   "cert": "/etc/hysteria/hysteria.crt",
   "key": "/etc/hysteria/hysteria.key",
   "up_mbps": 100,
@@ -728,7 +738,7 @@ echo '{
   }
 }
 ' >> /etc/hysteria/config.json
-
+sed -i "s|PORT_HYSTERIA|$PORT_HYSTERIA|g" /etc/hysteria/config.json
 chmod 755 /etc/hysteria/config.json
 
 sysctl -w net.core.rmem_max=16777216
@@ -877,33 +887,8 @@ exit 0' >> /etc/rc.local
     mkdir -m 777 /root/.web
 echo "Installation success: Pandavpnunite... " >> /root/.web/index.php
 
-echo "
-PORT_SQUID_1='3128'
-PORT_SQUID_2='8080'
-PORT_SQUID_3='8181'
-
-#PYTHON PROXY 
-PORT_SOCKS='80'
-PORT_WEBSOCKET='8081'
-PORT_PYPROXY='8010'
-
-#PORT OPENVPN
-PORT_TCP='1194';
-PORT_UDP='54';
-
-#SSL
-PORT_OPENVPN_TCP_SSL='443'
-PORT_OPENVPN_UDP_SSL='444'
-PORT_DROPBEAR_SSL='445'
-PORT_SSH_SSL='446'
-
-#OTHERS
-PORT_DROPBEAR='442'
-PORT_HYSTERIA='5666'
-PORT_DNSTT (SLOWDNS) ='5300' | SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 | NAMESERVER = _NAME_SERVER_
-" >> /root/.ports
-
-sed -i "s|_NAME_SERVER_|$NS|g" /root/.ports
+( set -o posix ; set ) | grep PORT > /root/.ports
+sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 > NAMESERVER = $(cat /root/ns.txt)|g" /root/.ports
 
   }&>/dev/null
 }
@@ -931,7 +916,7 @@ screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :5300 -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:442
+screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
 
 history -c;
 rm -r /etc/.systemlink
