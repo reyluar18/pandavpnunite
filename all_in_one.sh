@@ -926,8 +926,13 @@ screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
 
-history -c;
 rm -r /etc/.systemlink
+echo 'DNS=1.1.1.1
+DNSStubListener=no' >> /etc/resolv.conf
+sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
+
+history -c;
+
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '#############################################
 #         Authentication file system        #
