@@ -902,7 +902,6 @@ sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2
 }
 
 start_service () {
-clear
 echo 'Starting..'
 {
 
@@ -946,7 +945,7 @@ netstat -tupln
 }
 
 view_ports(){
-
+clear
 cat /root/.ports
 }
 
