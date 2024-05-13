@@ -95,19 +95,25 @@ service dropbear restart
 }
 
 install_websocket_and_socks(){
-wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
-dos2unix /usr/local/sbin/websocket.py
-chmod +x /usr/local/sbin/websocket.py
+echo "Installing websocket and socks"
+{
+    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
+    dos2unix /usr/local/sbin/websocket.py
+    chmod +x /usr/local/sbin/websocket.py
 
-wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
-dos2unix /usr/local/sbin/websocket.py
-chmod +x /usr/local/sbin/websocket.py
+    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
+    dos2unix /usr/local/sbin/websocket.py
+    chmod +x /usr/local/sbin/websocket.py
+}
+
 
 }
 
 
 install_dnstt(){
 
+echo "Installing DNSTT"
+{
 cd /usr/local
 wget https://golang.org/dl/go1.16.2.linux-amd64.tar.gz
 tar xvf go1.16.2.linux-amd64.tar.gz
@@ -139,6 +145,8 @@ nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $nsname 127.0.0.1:$PORT_DROPBEAR
 EOM
+}
+
 
 }
 
