@@ -523,7 +523,7 @@ accept = 443
 [openvpn-udp]
 connect = PORT_UDP
 accept = 444
-" >> stunnel.conf
+" > stunnel.conf
 
 sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/stunnel/stunnel.conf
