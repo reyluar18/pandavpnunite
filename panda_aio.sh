@@ -6,6 +6,7 @@ PASS='pandavpn_unity'
 DBNAME='daddyjoh_pandavpn_unity'
 
 rm -rf install_server.sh*
+rm -rf panda_aio.sh*
 
 #PORT OPENVPN
 PORT_TCP='1194';
