@@ -142,8 +142,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher none
-auth none
+cipher AES-128-GCM
+auth SHA256
 persist-key
 persist-tun
 ping-timer-rem
@@ -185,8 +185,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher none
-auth none
+cipher AES-128-GCM
+auth SHA256
 persist-key
 persist-tun
 ping-timer-rem
