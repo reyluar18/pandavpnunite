@@ -666,6 +666,15 @@ chmod 755 /etc/hysteria/hysteria.crt
 chmod 755 /etc/hysteria/hysteria.key
 }
 
+server_authentication(){
+mkdir -p /etc/authorization/pandavpnunite
+wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
+echo "* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php
+* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh
+* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh" | tee -a /var/spool/cron/root
+
+}   
+
 
 install_rclocal(){
   {
@@ -764,4 +773,5 @@ install_openvpn
 install_firewall_kvm
 install_stunnel
 install_rclocal
+server_authentication
 start_service
