@@ -15,9 +15,9 @@ if ($mysqli->connect_error) {
 
 $data = '';
 #Active Accounts
-$premium_active = "is_validated=1 AND frozen=0 AND duration > 0";
-$vip_active = "is_validated=1 AND frozen=0 AND vip_duration > 0";
-$private_active = "is_validated=1 AND frozen=0 AND private_duration > 0";
+$premium_active = "status='live' AND is_freeze=0 AND is_ban=0 AND duration > 0";
+$vip_active = "status='live' AND is_freeze=0 AND is_ban=0 AND vip_duration > 0";
+$private_active = "status='live' AND is_freeze=0 AND is_ban=0 AND private_duration > 0";
 $query = $mysqli->query("SELECT * FROM users WHERE ".$premium_active." OR ".$vip_active." OR ".$private_active." ORDER by user_id DESC");
 if($query->num_rows > 0)
 {
@@ -40,11 +40,8 @@ $data2 = '';
 $premium_deactived = "duration <= 0";
 $vip_deactived = "vip_duration <= 0";
 $private_deactived = "private_duration <= 0";
-$is_validated = "is_validated=0";
-$is_activate = "is_active=0";
-$freeze = "frozen=1";
 
-$query2 = $mysqli->query("SELECT * FROM users WHERE ".$is_validated." OR ".$freeze." OR  ".$premium_deactived ." OR ".$vip_deactived." OR ".$private_deactived."
+$query2 = $mysqli->query("SELECT * FROM users WHERE ".$premium_deactived ." OR ".$vip_deactived." OR ".$private_deactived."
 ");
 if($query2->num_rows > 0)
 {
