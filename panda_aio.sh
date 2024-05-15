@@ -152,7 +152,6 @@ reneg-sec 86400
 user nobody
 group nogroup
 client-to-client
-duplicate-cn
 username-as-common-name
 verify-client-cert none
 script-security 3
@@ -196,7 +195,6 @@ reneg-sec 86400
 user nobody
 group nogroup
 client-to-client
-duplicate-cn
 username-as-common-name
 verify-client-cert none
 script-security 3
