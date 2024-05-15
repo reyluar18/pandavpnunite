@@ -515,6 +515,9 @@ enL3UGT+BhRAPiA1I5CcG29RqjCzQoaCNg==
 echo "debug = 0
 output = /tmp/stunnel.log
 cert = /etc/stunnel/stunnel.pem
+[ssh]
+connect = 22  
+accept = 445 
 [openvpn-tcp]
 connect = PORT_TCP  
 accept = 443 
