@@ -3,6 +3,8 @@ error_reporting(E_ERROR | E_PARSE);
 ini_set('display_errors', '1');
 //include('config.php');
 
+
+
 $DB_host = '185.61.137.171';
 $DB_user = 'daddyjoh_pandavpn_unity';
 $DB_pass = 'pandavpn_unity';
@@ -13,8 +15,85 @@ if ($mysqli->connect_error) {
     die('Error : ('. $mysqli->connect_errno .') '. $mysqli->connect_error);
 }
 
+function encrypt_key($paswd)
+	{
+	  $mykey=getEncryptKey();
+	  $encryptedPassword=encryptPaswd($paswd,$mykey);
+	  return $encryptedPassword;
+	}
+	 
+	function decrypt_key($paswd)
+	{
+	  $mykey=getEncryptKey();
+	  $decryptedPassword=decryptPaswd($paswd,$mykey);
+	  return $decryptedPassword;
+	}
+	 
+	function getEncryptKey()
+	{
+		$secret_key = md5('eugcar');
+		$secret_iv = md5('sanchez');
+		$keys = $secret_key . $secret_iv;
+		return encryptor('encrypt', $keys);
+	}
+	function encryptPaswd($string, $key)
+	{
+	  $result = '';
+	  for($i=0; $i<strlen ($string); $i++)
+	  {
+		$char = substr($string, $i, 1);
+		$keychar = substr($key, ($i % strlen($key))-1, 1);
+		$char = chr(ord($char)+ord($keychar));
+		$result.=$char;
+	  }
+		return base64_encode($result);
+	}
+	 
+	function decryptPaswd($string, $key)
+	{
+	  $result = '';
+	  $string = base64_decode($string);
+	  for($i=0; $i<strlen($string); $i++)
+	  {
+		$char = substr($string, $i, 1);
+		$keychar = substr($key, ($i % strlen($key))-1, 1);
+		$char = chr(ord($char)-ord($keychar));
+		$result.=$char;
+	  }
+	 
+		return $result;
+	}
+	
+	function encryptor($action, $string) {
+		$output = false;
+
+		$encrypt_method = "AES-256-CBC";
+		
+		$secret_key = md5('eugcar sanchez');
+		$secret_iv = md5('sanchez eugcar');
+
+		
+		$key = hash('sha256', $secret_key);
+		
+		
+		$iv = substr(hash('sha256', $secret_iv), 0, 16);
+
+		
+		if( $action == 'encrypt' ) {
+			$output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
+			$output = base64_encode($output);
+		}
+		else if( $action == 'decrypt' ){
+			
+			$output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
+		}
+
+		return $output;
+	}
+
+
+
 $data = '';
-#Active Accounts
 $premium_active = "status='live' AND is_freeze=0 AND is_ban=0 AND duration > 0";
 $vip_active = "status='live' AND is_freeze=0 AND is_ban=0 AND vip_duration > 0";
 $private_active = "status='live' AND is_freeze=0 AND is_ban=0 AND private_duration > 0";
@@ -25,15 +104,16 @@ if($query->num_rows > 0)
 	{
 		$data .= '';
 		$username = $row['user_name'];
-		$password = $row['user_pass'];
-		$userid	= $row['user_id'];
-		$data .= '/usr/sbin/useradd -p $(openssl passwd -1 '.$password.') -M '.$username.' -u '.$userid.' -o --shell=/bin/false --no-create-home;'.PHP_EOL;
+		$password = decrypt_key($row['user_pass']);
+		$password = encryptor('decrypt',$password);		
+		$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M '.$username.''.PHP_EOL;
 	}
 }
 $location = '/etc/authorization/pandavpnunite/active.sh';
 $fp = fopen($location, 'w');
 fwrite($fp, $data) or die("Unable to open file!");
 fclose($fp);
+
 
 #In-Active and Invalid Accounts
 $data2 = '';
@@ -49,7 +129,7 @@ if($query2->num_rows > 0)
 	{
 		$data2 .= '';
 		$toadd = $row2['user_name'];	
-		$data2 .= '/usr/bin/pkill -u '.$toadd.' && /usr/sbin/userdel -rf '.$toadd.''.PHP_EOL;
+		$data2 .= 'userdel '.$toadd.''.PHP_EOL;
 	}
 }
 $location2 = '/etc/authorization/pandavpnunite/not-active.sh';
@@ -59,4 +139,4 @@ fclose($fp);
 
 $mysqli->close();
 ?>
-1
+Working Password Decrypted
