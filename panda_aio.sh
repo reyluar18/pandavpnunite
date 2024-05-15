@@ -670,9 +670,6 @@ chmod 755 /etc/hysteria/hysteria.key
 server_authentication(){
 mkdir -p /etc/authorization/pandavpnunite
 wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
-echo "* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php
-* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh
-* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh" | tee -a /var/spool/cron/root
 
 }   
 
@@ -741,7 +738,13 @@ clear
 echo 'Starting..'
 {
 
-sudo crontab -l | { echo "* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart"; } | crontab -
+sudo crontab -l | { echo "
+* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
+* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php
+* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh
+* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh
+"; 
+} | crontab -
 sudo systemctl restart cron
 } &>/dev/null
 clear
