@@ -911,7 +911,6 @@ systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service
 screen -dmS socks python /etc/socks.py 80
 ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
-screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
 bash /etc/hysteria/monitor.sh openvpn
 bash /etc/hysteria/online.sh
 exit 0' >> /etc/rc.local
@@ -965,6 +964,7 @@ screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
+screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
 
 cat /root/.ports
 screen -list
