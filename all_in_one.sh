@@ -929,14 +929,26 @@ sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2
   }&>/dev/null
 }
 
+server_authentication(){
+mkdir -p /etc/authorization/pandavpnunite
+wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
+}   
+
 start_service () {
 echo 'Starting..'
 {
-
-sudo crontab -l | { echo "SHELL=/bin/bash
+sudo crontab -l | { echo "
+SHELL=/bin/bash
+* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
+* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php
+* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh
+* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh
 * * * * * /bin/bash /root/auto >/dev/null 2>&1
 0 * * * * /bin/bash /bin/dnsttauto.sh >/dev/null 2>&1
-* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart"; } | crontab -
+* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
+"; 
+} | crontab -
+
 sudo systemctl restart cron
 } &>/dev/null
 clear
@@ -975,23 +987,7 @@ echo -e " \033[0;35m════════════════════
 netstat -tupln
 }
 
-server_authentication(){
-    mkdir -p /etc/authorization/pandavpnunite
-    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/server_auth.sh -O /etc/authorization/pandavpnunite/server_auth.sh
-    chmod +x /etc/authorization/pandavpnunite/server_auth.sh
-
-    #dropbear
-    echo "
-DROPBEAR_CUSTOM_AUTH="/etc/authorization/pandavpnunite/server_auth.sh"
-    " >> /etc/default/dropbear
-    sudo service dropbear restart
-
-    #sshd
-    sed -i "s|#AuthorizedKeysCommand none|AuthorizedKeysCommand /etc/authorization/pandavpnunite/server_auth.sh|g" /etc/ssh/sshd_config
-    sed -i "s|#AuthorizedKeysCommandUser nobody|AuthorizedKeysCommandUser root|g" /etc/ssh/sshd_config
-    sudo service sshd restart
-
-}   
+ 
 
 install_require
 install_hysteria
@@ -1004,7 +1000,7 @@ install_rclocal
 install_dropbear
 install_websocket_and_socks
 install_dnstt
-# server_authentication
+server_authentication
 view_ports
 start_service
 execute_to_screen
