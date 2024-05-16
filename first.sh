@@ -1,178 +1,45 @@
 #!/bin/bash
 #Script Variables
-#mysql1.blazingfast.io
-HOST='185.61.137.171'
-USER='daddyjoh_pandavpn_unity'
-PASS='pandavpn_unity'
-DBNAME='daddyjoh_pandavpn_unity'
+HOST='206.72.198.91'
+USER='ymodscf_karl'
+PASS='ymodscf_karl'
+DBNAME='ymodscf_karl'
 
-rm -rf all_in_one.sh*
-
-#PORT SQUID
-PORT_SQUID_1='3128'
-PORT_SQUID_2='8080'
-PORT_SQUID_3='8181'
-
-#PYTHON PROXY 
-PORT_SOCKS='80'
-PORT_WEBSOCKET='8081'
-PORT_PYPROXY='8010'
+rm -rf install_server.sh*
 
 #PORT OPENVPN
 PORT_TCP='1194';
-PORT_UDP='54';
-
-#SSL
-PORT_OPENVPN_TCP_SSL='443'
-PORT_OPENVPN_UDP_SSL='444'
-PORT_DROPBEAR_SSL='445'
-PORT_SSH_SSL='446'
-
-#OTHERS
-PORT_DROPBEAR='442'
-PORT_HYSTERIA='5666'
-PORT_DNSTT='5300'
+PORT_UDP='53';
 
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
 server_interface=$(ip route get 8.8.8.8 | awk '/dev/ {f=NR} f&&NR-1==f' RS=" ")
 
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo '#############################################
-#         Authentication file system        #
-#       Setup by: Pandavpn Unite            #
-#       Server System: Panda VPN 	        #
-#            owner: Pandavpnunite      	    #
-#############################################'
+echo '                                                              
+██╗   ██╗███╗   ███╗ ██████╗ ██████╗ ██╗███████╗██╗███████╗██████╗ 
+╚██╗ ██╔╝████╗ ████║██╔═══██╗██╔══██╗██║██╔════╝██║██╔════╝██╔══██╗
+ ╚████╔╝ ██╔████╔██║██║   ██║██║  ██║██║█████╗  ██║█████╗  ██║  ██║
+  ╚██╔╝  ██║╚██╔╝██║██║   ██║██║  ██║██║██╔══╝  ██║██╔══╝  ██║  ██║
+   ██║   ██║ ╚═╝ ██║╚██████╔╝██████╔╝██║██║     ██║███████╗██████╔╝
+   ╚═╝   ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚═╝     ╚═╝╚══════╝╚═════╝ 
+                                                                   
+ '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-read -p "Please enter ns host for Slowdns: " NS
 
 install_require () {
 
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y curl wget cron python2 libpython2-stdlib
+apt install -y curl wget cron python-minimal libpython-stdlib
 apt install -y iptables
 apt install -y openvpn netcat httpie php neofetch vnstat
 apt install -y screen squid stunnel4 dropbear gnutls-bin python
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
 apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
-mkdir -p /etc/update-motd.d
-apt-get install inxi screenfetch lolcat figlet -y
-apt-get install lsof git iptables-persistent -y
-
+#clear
+#}&>/dev/null
 clear
-}
-
-install_dropbear(){
-
-/bin/cat <<"EOM" >/etc/update-motd.d/01-custom
-#!/bin/sh
-
-exec 2>&1
-
-# lolcat MIGHT NOT BE IN $PATH YET, SO BE EXPLICIT
-LOLCAT=/usr/games/lolcat
-
-# UPPERCASE HOSTNAME, APPLY FIGLET FONT "block" AND CENTERING
-INFO_HOST=$(echo PANDA-UNITE | awk '{print toupper($0)}' | figlet -tc -f block)
-
-# RUN IT ALL THROUGH lolcat FOR COLORING
-printf "%s\n%s\n" "$INFO_HOST" | $LOLCAT -f
-EOM
-
-chmod -x /etc/update-motd.d/*
-chmod +x /etc/update-motd.d/01-custom
-rm -f /etc/motd
-touch /etc/motd.tail
-
-sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-sed -i "s|DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_DROPBEAR|g" /etc/default/dropbear
-echo "/bin/false" >> /etc/shells
-echo "/usr/sbin/nologin" >> /etc/shells
-service dropbear restart
-
-}
-
-install_websocket_and_socks(){
-echo "Installing websocket and socks"
-{
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
-    dos2unix /usr/local/sbin/websocket.py
-    chmod +x /usr/local/sbin/websocket.py
-
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
-    dos2unix /usr/local/sbin/websocket.py
-    chmod +x /usr/local/sbin/websocket.py
-}&>/dev/null
-
-
-}
-
-
-install_dnstt(){
-
-echo "Installing DNSTT"
-{
-cd /usr/local
-wget https://golang.org/dl/go1.16.2.linux-amd64.tar.gz
-tar xvf go1.16.2.linux-amd64.tar.gz
-
-export GOROOT=/usr/local/go
-export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-cd /root
-git config --global http.sslverify false
-git clone https://github.com/NuclearDevilStriker/dnstt.git
-cd /root/dnstt/dnstt-server
-go build
-./dnstt-server -gen-key -privkey-file server.key -pubkey-file server.pub
-
-cat <<EOM > /root/dnstt/dnstt-server/server.key
-124d51aed2abceb984978cfe73bbfaa1b74ec0be869510ac254efc6e9ec7addc
-EOM
-
-cat <<EOM > /root/dnstt/dnstt-server/server.pub
-5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
-EOM
-echo $NS > /root/ns.txt
-NSNAME="$(cat /root/ns.txt)"
-cd /root/dnstt/dnstt-server
-screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $NSNAME 127.0.0.1:$PORT_DROPBEAR
-
-cat <<EOM > /bin/dnsttauto.sh
-sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
-nsname="$(cat /root/ns.txt)"
-cd /root/dnstt/dnstt-server
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:$PORT_DROPBEAR
-EOM
-}&>/dev/null
-
-
-}
-
-execute_to_screen(){
-    
-cat <<EOM >/root/auto
-#!/bin/bash
-
-if nc -z localhost PORT_WEBSOCKET; then
-    echo "WebSocket is running"
-else
-    echo "Starting WebSocket"
-    screen -dmS websocket python /usr/local/sbin/websocket.py PORT_WEBSOCKET
-fi
-
-if nc -z localhost PORT_PYPROXY; then
-    echo "Python Proxy Running"
-else
-    echo "Starting Port PORT_PYPROXY"
-    screen -dmS proxy python /usr/local/sbin/proxy.py PORT_PYPROXY
-fi
-EOM
-sed -i "s|PORT_WEBSOCKET|$PORT_WEBSOCKET|g" /root/auto
-sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /root/auto
-
-bash /root/auto
 }
 
 install_squid(){
@@ -197,7 +64,7 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
     update-alternatives --set c++ /usr/bin/g++
     cd /usr/src
-    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid-3.1.23.tar.gz
+    wget https://raw.githubusercontent.com/freenetsapinas/ymod/main/squid-3.1.23.tar.gz
     tar zxvf squid-3.1.23.tar.gz
     cd squid-3.1.23
     ./configure --prefix=/usr \
@@ -211,40 +78,36 @@ deb-src http://security.debian.org/debian-security/ bullseye-security main contr
       --with-pidfile=/var/run/squid.pid
     make -j$(nproc)
     make install
-    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid.sh
+    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/freenetsapinas/ymod/main/squid.sh
     chmod +x /etc/init.d/squid
     update-rc.d squid defaults
     chown -cR proxy /var/log/squid
     squid -z
     cd /etc/squid/
     rm squid.conf
-    echo "acl PandaVPNUnite dst `curl -s https://api.ipify.org`" >> squid.conf
-    echo 'http_port SQUID_PORT_1
-http_port SQUID_PORT_2
-http_port SQUID_PORT_3
+    echo "acl Michaele dst `curl -s https://api.ipify.org`" >> squid.conf
+    echo 'http_port 8080
+http_port 8181
 visible_hostname Proxy
 acl PURGE method PURGE
 acl HEAD method HEAD
 acl POST method POST
 acl GET method GET
 acl CONNECT method CONNECT
-http_access allow PandaVPNUnite
+http_access allow Michaele
 http_reply_access allow all
 http_access deny all
 icp_access allow all
 always_direct allow all
-visible_hostname PandaVPNUnite-Proxy
+visible_hostname Michaele-Proxy
 error_directory /usr/share/squid/errors/English' >> squid.conf
-    sed -i "s|SQUID_PORT_1|$PORT_SQUID_1|g" squid.conf
-    sed -i "s|SQUID_PORT_2|$PORT_SQUID_2|g" squid.conf
-    sed -i "s|SQUID_PORT_3|$PORT_SQUID_3|g" squid.conf
     cd /usr/share/squid/errors/English
     rm ERR_INVALID_URL
-    echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
+    echo '<!--MichaeleAbalos--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
     chmod 755 *
     /etc/init.d/squid start
 cd /etc || exit
-wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks.py' -O /etc/socks.py
+wget 'https://raw.githubusercontent.com/freenetsapinas/ymod/main/socks.py' -O /etc/socks.py
 dos2unix /etc/socks.py
 chmod +x /etc/socks.py
 rm /etc/apt/sources.list
@@ -267,7 +130,7 @@ touch /etc/openvpn/server2.conf
 echo 'DNS=1.1.1.1
 DNSStubListener=no' >> /etc/systemd/resolved.conf
 
-echo '#Openvpn Configuration by PandaVPNUnite Developer :)
+echo '#Openvpn Configuration by YModified Developer :)
 dev tun
 port PORT_UDP
 proto udp
@@ -280,8 +143,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher AES-128-GCM
-auth SHA256
+cipher none
+auth none
 persist-key
 persist-tun
 ping-timer-rem
@@ -311,7 +174,7 @@ verb 3' > /etc/openvpn/server.conf
 
 sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/openvpn/server.conf
 
-echo '#Openvpn Configuration by PandaVPNUnite Developer :)
+echo '#Openvpn Configuration by YModified Developer :)
 dev tun
 port PORT_TCP
 proto tcp
@@ -324,8 +187,8 @@ ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
-cipher AES-128-GCM
-auth SHA256
+cipher none
+auth none
 persist-key
 persist-tun
 ping-timer-rem
@@ -355,7 +218,7 @@ verb 3' > /etc/openvpn/server2.conf
 
 sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/openvpn/server2.conf
 
-cat <<EOM >/etc/openvpn/login/config.sh
+cat <<\EOM >/etc/openvpn/login/config.sh
 #!/bin/bash
 HOST='DBHOST'
 USER='DBUSER'
@@ -368,15 +231,15 @@ sed -i "s|DBUSER|$USER|g" /etc/openvpn/login/config.sh
 sed -i "s|DBPASS|$PASS|g" /etc/openvpn/login/config.sh
 sed -i "s|DBNAME|$DBNAME|g" /etc/openvpn/login/config.sh
 
-wget -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/auth_vpn"
+wget -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/freenetsapinas/ymod/main/premium"
 
 #client-connect file
-wget -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/connect"
+wget -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/freenetsapinas/ymod/main/connect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/connect.sh
 
 #TCP client-disconnect file
-wget -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/disconnect"
+wget -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/freenetsapinas/ymod/main/disconnect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/disconnect.sh
 
@@ -419,11 +282,11 @@ Certificate:
         Version: 3 (0x2)
         Serial Number: 1 (0x1)
         Signature Algorithm: sha256WithRSAEncryption
-        Issuer: C=PH, ST=MA, L=Angono Rizal, O=PandaVPNUnite, OU=PandaVPNUnite, CN=PandaVPNUnite CA/name=PandaVPNUnite/emailAddress=pandavpnunite@gmail.com
+        Issuer: C=PH, ST=MA, L=Caloocan City, O=YModified, OU=YModified, CN=YModified CA/name=YModified/emailAddress=ymodified23@gmail.com
         Validity
             Not Before: Sep 20 03:54:08 2022 GMT
             Not After : Sep 17 03:54:08 2032 GMT
-        Subject: C=PH, ST=CA, L=Angono Rizal, O=PandaVPNUnite, OU=PandaVPNUnite, CN=PandaVPNUnite/name=PandaVPNUnite/emailAddress=pandavpnunite@gmail.com
+        Subject: C=PH, ST=CA, L=Caloocan City, O=YModified, OU=YModified, CN=YModified/name=YModified/emailAddress=ymodified23@gmail.com
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
                 RSA Public-Key: (2048 bit)
@@ -458,7 +321,7 @@ Certificate:
                 28:1D:A2:5E:3A:50:2C:3A:E0:B0:54:57:D6:11:02:FC:D6:1F:FF:35
             X509v3 Authority Key Identifier: 
                 keyid:DB:6B:D9:7E:CC:36:11:1E:67:E8:45:B0:07:26:88:17:F6:8B:F3:AB
-                DirName:/C=PH/ST=MA/L=Angono Rizal/O=PandaVPNUnite/OU=PandaVPNUnite/CN=PandaVPNUnite CA/name=PandaVPNUnite/emailAddress=pandavpnunite@gmail.com
+                DirName:/C=PH/ST=MA/L=Caloocan City/O=YModified/OU=YModified/CN=YModified CA/name=YModified/emailAddress=ymodified23@gmail.com
                 serial:52:67:60:3D:A2:29:17:35:5F:CA:B9:4A:8E:E2:80:74:F3:CE:64:EB
 
             X509v3 Extended Key Usage: 
@@ -575,170 +438,95 @@ chmod 755 /etc/openvpn/login/auth_vpn
 
 install_firewall_kvm () {
 clear
-echo "Installing iptables."
-{
-echo "net.ipv4.conf.default.rp_filter = 1
-net.ipv4.conf.default.accept_source_route = 0
-kernel.sysrq = 0
-kernel.core_uses_pid = 1
-net.ipv4.tcp_syncookies = 1
-kernel.msgmnb = 65536
-kernel.msgmax = 65536
-kernel.shmmax = 68719476736
-kernel.shmall = 4294967296
-net.ipv4.ip_forward = 1
-fs.file-max = 65535
-net.core.rmem_default = 262144
-net.core.rmem_max = 262144
-net.core.wmem_default = 262144
-net.core.wmem_max = 262144
-net.ipv4.tcp_rmem = 4096 87380 8388608
-net.ipv4.tcp_wmem = 4096 65536 8388608
-net.ipv4.tcp_mem = 4096 4096 4096
-net.ipv4.tcp_low_latency = 1
-net.core.netdev_max_backlog = 4000
-net.ipv4.ip_local_port_range = 1024 65000
-net.ipv4.tcp_max_syn_backlog = 16384" > /etc/sysctl.conf
+#echo "Installing iptables."
+
+echo "net.ipv4.ip_forward=1
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.eth0.rp_filter=0
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
 
 sysctl -p
 
-iptables -F; iptables -X; iptables -Z
 iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-iptables -A INPUT -i eth0 -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -i eth0 -p udp --dport 54 -j ACCEPT
-iptables -A INPUT -i eth0 -p udp --dport 5300 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 54 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 5300 -j ACCEPT
-iptables -A PREROUTING -t nat -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i ens3 -p udp --dport 53 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i eth0 -p udp --dport 54 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i ens3 -p udp --dport 54 -j REDIRECT --to-port 5300
 iptables -t nat -A PREROUTING -p udp --dport 20000:50000 -j DNAT --to-destination :5666
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
-echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-mkdir -p /etc/iptables
+iptables -t nat -A POSTROUTING -s 10.20.0.0/22 -o "$server_interface" -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.20.0.0/22 -o "$server_interface" -j SNAT --to-source "$server_ip"
+iptables -t nat -A POSTROUTING -s 10.30.0.0/22 -o "$server_interface" -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.30.0.0/22 -o "$server_interface" -j SNAT --to-source "$server_ip"
 iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state NEW -m recent --update --seconds 30 --hitcount 10 --name DEFAULT --mask 255.255.255.255 --rsource -j DROP
 iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state NEW -m recent --set --name DEFAULT --mask 255.255.255.255 --rsource
-iptables-save > /etc/iptables/rules.v4
-ip6tables-save > /etc/iptables/rules.v6
 iptables-save > /etc/iptables_rules.v4
 ip6tables-save > /etc/iptables_rules.v6
-}&>/dev/null
+#}&>/dev/null
 }
 
 install_stunnel() {
   {
 cd /etc/stunnel/ || exit
 
-echo "-----BEGIN RSA PRIVATE KEY-----
-MIIEpgIBAAKCAQEAzg+mGfSfOqC7p3C8NYBNQkoaLuYnjIBK+48pTWkZ8FbmypxG
-bk78J6vPLeqHCvY7iKOCSbAFLQSmRB5ltaOuO1gYeogefIzAFA8EPamI6m483Y+X
-Fh44Xoud9M4B3qydeNYqmmkTC1tM26eYNhixk9lYQtvYDR13h2BXQZ3bMUZx6/69
-7QNYghvbaKt7z0HSF+AV+zEb8t0M0Jmwe7B9Qz74ujBw10eY60Oh10QHrN7fiR0U
-lVZpeu6XLibkUmvuY/8yZy9XEg/QV9LjbsmACqwL1pS2ExzbBR2HeNV8fckepYvw
-PAMdzygeN9ZGj445HltmdBTVMFJXN3vmpWtKSQIDAQABAoIBAQDFReoJM041fKfq
-t10YA0rzyamjeKgoNLKUfwxVledFVo0BL/elp2x0NmHUXZEHh5CbUZ5sGV37KVZc
-JJXO/XLSUZatyB8XslA5Y971gZcYiI0wuEU24ZupuBRyx762hZ8EjlSfGzUmTDQa
-nip0r9Nh7lQ3Pe1rMOi77BndMdklI8eg0PGB9DNDnGPjsatkn6X5TakAYvV5G+kV
-/PjWyOubBIjuN4qWF57loeh6MWOpm9O33EipBlcK26pn6cS/R/QkI4b3hbeoGJoz
-FohkLjwncq4PGdIgUtMppRZF9KXec8QIlCLNYOENAfJmJwVqioft8kBM2ykjoM+z
-8MwhqZjZAoGBAP+8DJZsMZ6WrsPu3bRQ8ylF0J+a0EVzUBASAwFFiOFtVKWyr3Wm
-zFROLz0LcuVHtTs3OiGRS75wbrnUUB3+bCyj08pHk0HSMYx/OdroeY+TFCi9IPjg
-9WzFD0sLjcLKmEBNLN/shpKnNQImj5ampUIYsBoUe7OV4P+UvsreCKg7AoGBAM5G
-Zqi4Mmn05MQb2MRTcc/haV9bFRPIWBMOMW9XT7lDJEmy61lJ2fL63z6c/CPor5sV
-ZLjX1SsSphlhbWvVSA1dVQUwzQY4AjoJ3ggY75Je7/TIrlFMaQraxpzOHazw1gh5
-2DlHFzr9HJM3lVrt3RTayRUySSBu4fmVgCAidvNLAoGBAIPzbG9E3glc6EnSevRp
-/D0kd7OSdroO+JWCJajHTww5lD52xw+mg7FQMhGGUb8506n9IfJl/LYDXy5k/P2s
-4/XYhhPOAI4qvUQn9RsdbnOFSRaIF3Yy5I890lk/WeLTE+HBsFDNwtXyjmhQqy/p
-RkWnZV3ficAsqk5VWmhkTgU3AoGBAJcw+uYHvMv0+AjV8FhWYUFhkv6VoClT21p8
-OLfHY2QDVoG+ZsqXWuzB/QfDwPwA/VXKpHznlhNwI9bOlolHVvyUwFCBqIU6YEdy
-HBALVu4OMAtXXI2yV/vgx1r/qLit/fNQe6/f76MJCvzM7OgtGLLEekbTCM6A95kc
-f0EOgelpAoGBAKWAC/z4n8GQSJ+mDkVf1gmT9i2uuyCwzHDUZwpoSlGCQf2qZKjD
-6lFyflt60poPRw0yTkyrv9TqdCxfmmK/o+jJp/j8A7qFYt5mcSUvwj3hkvGKdqY9
-oAjmT6yneiARd3KhLIftp4Fo48vNzU3RLqkk1rrWoaBDvK7lhzkNIEmD
------END RSA PRIVATE KEY-----
+echo "-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClmgCdm7RB2VWK
+wfH8HO/T9bxEddWDsB3fJKpM/tiVMt4s/WMdGJtFdRlxzUb03u+HT6t00sLlZ78g
+ngjxLpJGFpHAGdVf9vACBtrxv5qcrG5gd8k7MJ+FtMTcjeQm8kVRyIW7cOWxlpGY
+6jringYZ6NcRTrh/OlxIHKdsLI9ddcekbYGyZVTm1wd22HVG+07PH/AeyY78O2+Z
+tbjxGTFRSYt3jUaFeUmWNtxqWnR4MPmC+6iKvUKisV27P89g8v8CiZynAAWRJ0+A
+qp+PWxwHi/iJ501WdLspeo8VkXIb3PivyIKC356m+yuuibD2uqwLZ2//afup84Qu
+pRtgW/PbAgMBAAECggEAVo/efIQUQEtrlIF2jRNPJZuQ0rRJbHGV27tdrauU6MBT
+NG8q7N2c5DymlT75NSyHRlKVzBYTPDjzxgf1oqR2X16Sxzh5uZTpthWBQtal6fmU
+JKbYsDDlYc2xDZy5wsXnCC3qAaWs2xxadPUS3Lw/cjGsoeZlOFP4QtV/imLseaws
+7r4KZE7SVO8dF8Xtcy304Bd7UsKClnbCrGsABUF/rqA8g34o7yrpo9XqcwbF5ihQ
+TbnB0Ns8Bz30pjgGjJZTdTL3eskP9qMJWo/JM76kSaJWReoXTws4DlQHxO29z3eK
+zKdxieXaBGMwFnv23JvXKJ5eAnxzqsL6a+SuNPPN4QKBgQDQhisSDdjUJWy0DLnJ
+/HjtsnQyfl0efOqAlUEir8r5IdzDTtAEcW6GwPj1rIOm79ZeyysT1pGN6eulzS1i
+6lz6/c5uHA9Z+7LT48ZaQjmKF06ItdfHI9ytoXaaQPMqW7NnyOFxCcTHBabmwQ+E
+QZDFkM6vVXL37Sz4JyxuIwCNMQKBgQDLThgKi+L3ps7y1dWayj+Z0tutK2JGDww7
+6Ze6lD5gmRAURd0crIF8IEQMpvKlxQwkhqR4vEsdkiFFJQAaD+qZ9XQOkWSGXvKP
+A/yzk0Xu3qL29ZqX+3CYVjkDbtVOLQC9TBG60IFZW79K/Zp6PhHkO8w6l+CBR+yR
+X4+8x1ReywKBgQCfSg52wSski94pABugh4OdGBgZRlw94PCF/v390En92/c3Hupa
+qofi2mCT0w/Sox2f1hV3Fw6jWNDRHBYSnLMgbGeXx0mW1GX75OBtrG8l5L3yQu6t
+SeDWpiPim8DlV52Jp3NHlU3DNrcTSOFgh3Fe6kpot56Wc5BJlCsliwlt0QKBgEol
+u0LtbePgpI2QS41ewf96FcB8mCTxDAc11K6prm5QpLqgGFqC197LbcYnhUvMJ/eS
+W53lHog0aYnsSrM2pttr194QTNds/Y4HaDyeM91AubLUNIPFonUMzVJhM86FP0XK
+3pSBwwsyGPxirdpzlNbmsD+WcLz13GPQtH2nPTAtAoGAVloDEEjfj5gnZzEWTK5k
+4oYWGlwySfcfbt8EnkY+B77UVeZxWnxpVC9PhsPNI1MTNET+CRqxNZzxWo3jVuz1
+HtKSizJpaYQ6iarP4EvUdFxHBzjHX6WLahTgUq90YNaxQbXz51ARpid8sFbz1f37
+jgjgxgxbitApzno0E2Pq/Kg=
+-----END PRIVATE KEY-----
 -----BEGIN CERTIFICATE-----
-MIIEDzCCAvegAwIBAgIUVrhI9GNGuQIoDwV7uPLsYPsbVN0wDQYJKoZIhvcNAQEL
-BQAwgZYxCzAJBgNVBAYTAlBIMQ8wDQYDVQQIDAZBbmdvbm8xDjAMBgNVBAcMBVJp
-emFsMRgwFgYDVQQKDA9QYW5kYSBWUE4gVW5pdGUxETAPBgNVBAsMCFBBTkRBVlBO
-MREwDwYDVQQDDAhQQU5EQVZQTjEmMCQGCSqGSIb3DQEJARYXcGFuZGF2cG51bml0
-ZUBnbWFpbC5jb20wHhcNMjQwNTE1MTUxNDAyWhcNMjcwNTE1MTUxNDAyWjCBljEL
-MAkGA1UEBhMCUEgxDzANBgNVBAgMBkFuZ29ubzEOMAwGA1UEBwwFUml6YWwxGDAW
-BgNVBAoMD1BhbmRhIFZQTiBVbml0ZTERMA8GA1UECwwIUEFOREFWUE4xETAPBgNV
-BAMMCFBBTkRBVlBOMSYwJAYJKoZIhvcNAQkBFhdwYW5kYXZwbnVuaXRlQGdtYWls
-LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM4Pphn0nzqgu6dw
-vDWATUJKGi7mJ4yASvuPKU1pGfBW5sqcRm5O/Cerzy3qhwr2O4ijgkmwBS0EpkQe
-ZbWjrjtYGHqIHnyMwBQPBD2piOpuPN2PlxYeOF6LnfTOAd6snXjWKpppEwtbTNun
-mDYYsZPZWELb2A0dd4dgV0Gd2zFGcev+ve0DWIIb22ire89B0hfgFfsxG/LdDNCZ
-sHuwfUM++LowcNdHmOtDoddEB6ze34kdFJVWaXruly4m5FJr7mP/MmcvVxIP0FfS
-427JgAqsC9aUthMc2wUdh3jVfH3JHqWL8DwDHc8oHjfWRo+OOR5bZnQU1TBSVzd7
-5qVrSkkCAwEAAaNTMFEwHQYDVR0OBBYEFPLfHhq3zC0HHxHP/i4l9O4+LxyrMB8G
-A1UdIwQYMBaAFPLfHhq3zC0HHxHP/i4l9O4+LxyrMA8GA1UdEwEB/wQFMAMBAf8w
-DQYJKoZIhvcNAQELBQADggEBAG+h/f5V8XTnMj0+foayN/WbVv1FS6mnfwDxY6hi
-BqDetXSXV0kcfF9i2RX8NYjgYI/7mHEITgG+XVw0wIJ389zkER8p+EldAvgYBvfz
-Vos09yRGACyV4MDWY1Zc0VaWiYHz4Wq72u6UmAqu7TPISuifTPmK/C6+bdAJKhEF
-x+GF1SxqdSmNJDD4+VSc+/POrLk5teS70kMgRgRYf12J3OSftXtY2A4J93ZlhlRA
-DwR9nm2zeljwuH9aKgw+BPiQ8ZVKMoJLJ/Khmkaxj4v7Q6mwegkjXh+UwBmk9RtT
-f3hqH8xsT0xyX6kKg+id/rzjeHyCcWcNoodoCF2IzovhbgA=
+MIIDRTCCAi2gAwIBAgIUOvs3vdjcBtCLww52CggSlAKafDkwDQYJKoZIhvcNAQEL
+BQAwMjEQMA4GA1UEAwwHS29ielZQTjERMA8GA1UECgwIS29iZUtvYnoxCzAJBgNV
+BAYTAlBIMB4XDTIxMDcwNzA1MzQwN1oXDTMxMDcwNTA1MzQwN1owMjEQMA4GA1UE
+AwwHS29ielZQTjERMA8GA1UECgwIS29iZUtvYnoxCzAJBgNVBAYTAlBIMIIBIjAN
+BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApZoAnZu0QdlVisHx/Bzv0/W8RHXV
+g7Ad3ySqTP7YlTLeLP1jHRibRXUZcc1G9N7vh0+rdNLC5We/IJ4I8S6SRhaRwBnV
+X/bwAgba8b+anKxuYHfJOzCfhbTE3I3kJvJFUciFu3DlsZaRmOo64p4GGejXEU64
+fzpcSBynbCyPXXXHpG2BsmVU5tcHdth1RvtOzx/wHsmO/DtvmbW48RkxUUmLd41G
+hXlJljbcalp0eDD5gvuoir1CorFduz/PYPL/AomcpwAFkSdPgKqfj1scB4v4iedN
+VnS7KXqPFZFyG9z4r8iCgt+epvsrromw9rqsC2dv/2n7qfOELqUbYFvz2wIDAQAB
+o1MwUTAdBgNVHQ4EFgQUcKFL6tckon2uS3xGrpe1Zpa68VEwHwYDVR0jBBgwFoAU
+cKFL6tckon2uS3xGrpe1Zpa68VEwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0B
+AQsFAAOCAQEAYQP0S67eoJWpAMavayS7NjK+6KMJtlmL8eot/3RKPLleOjEuCdLY
+QvrP0Tl3M5gGt+I6WO7r+HKT2PuCN8BshIob8OGAEkuQ/YKEg9QyvmSm2XbPVBaG
+RRFjvxFyeL4gtDlqb9hea62tep7+gCkeiccyp8+lmnS32rRtFa7PovmK5pUjkDOr
+dpvCQlKoCRjZ/+OfUaanzYQSDrxdTSN8RtJhCZtd45QbxEXzHTEaICXLuXL6cmv7
+tMuhgUoefS17gv1jqj/C9+6ogMVa+U7QqOvL5A7hbevHdF/k/TMn+qx4UdhrbL5Q
+enL3UGT+BhRAPiA1I5CcG29RqjCzQoaCNg==
 -----END CERTIFICATE-----" >> stunnel.pem
-rm -f stunnel.conf
-mkdir -p /usr/local/var/run/
+
 echo "debug = 0
 output = /tmp/stunnel.log
 cert = /etc/stunnel/stunnel.pem
-pid = /usr/local/var/run/stunnel.pid
-client = no
-socket = a:SO_REUSEADDR=1
-socket = l:TCP_NODELAY=1
-socket = r:TCP_NODELAY=1
-
-[sshd]
-accept = PORT_SSH_SSL
-connect = 127.0.0.1:22
-[dropbear]
-accept = PORT_DROPBEAR_SSL
-connect = 127.0.0.1:PORT_DROPBEAR
 [openvpn-tcp]
 connect = PORT_TCP  
-accept = PORT_OPENVPN_TCP_SSL 
+accept = 443 
 [openvpn-udp]
 connect = PORT_UDP
-accept = PORT_OPENVPN_UDP_SSL
+accept = 444
 " >> stunnel.conf
 
 sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_SSH_SSL|$PORT_SSH_SSL|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_DROPBEAR_SSL|$PORT_DROPBEAR_SSL|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_DROPBEAR|$PORT_DROPBEAR|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_OPENVPN_TCP_SSL|$PORT_OPENVPN_TCP_SSL|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_OPENVPN_UDP_SSL|$PORT_OPENVPN_UDP_SSL|g" /etc/stunnel/stunnel.conf
-
 cd /etc/default && rm stunnel4
 
 echo 'ENABLED=1
@@ -756,31 +544,31 @@ install_hysteria(){
 clear
 echo 'Installing hysteria.'
 {
-wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria.sh; chmod +x ~/hysteria.sh; ./hysteria.sh --version v1.3.5
+wget -N --no-check-certificate -q -O ~/install_server.sh https://raw.githubusercontent.com/RepositoriesDexter/Hysteria/main/install_server.sh; chmod +x ~/install_server.sh; ./install_server.sh --version v1.3.5
 
 rm -f /etc/hysteria/config.json
 
 echo '{
-  "listen": ":PORT_HYSTERIA",
+  "listen": ":5666",
   "cert": "/etc/hysteria/hysteria.crt",
   "key": "/etc/hysteria/hysteria.key",
   "up_mbps": 100,
   "down_mbps": 100,
   "disable_udp": false,
-  "obfs": "pandavpnunite",
+  "obfs": "ymodified",
   "auth": {
     "mode": "passwords",
-    "config": ["pandavpnunite"]
+    "config": ["ymodified"]
   }
 }
 ' >> /etc/hysteria/config.json
-sed -i "s|PORT_HYSTERIA|$PORT_HYSTERIA|g" /etc/hysteria/config.json
+
 chmod 755 /etc/hysteria/config.json
 
 sysctl -w net.core.rmem_max=16777216
 sysctl -w net.core.wmem_max=16777216
 
-wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
+wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/freenetsapinas/ymod/main/badvpn-udpgw64"
 chmod +x /usr/bin/badvpn-udpgw
 ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
 } &>/dev/null
@@ -892,7 +680,8 @@ install_rclocal(){
     sudo systemctl start openvpn@server2.service    
     
     echo "[Unit]
-Description=pandavpnunite service
+Description=michaele service
+Documentation=http://ymodified.online
 
 [Service]
 Type=oneshot
@@ -900,7 +689,7 @@ ExecStart=/bin/bash /etc/rc.local
 RemainAfterExit=yes
 
 [Install]
-WantedBy=multi-user.target" >> /etc/systemd/system/pandavpnunite.service
+WantedBy=multi-user.target" >> /etc/systemd/system/michaele.service
     echo '#!/bin/sh -e
 service ufw stop
 iptables-restore < /etc/iptables_rules.v4
@@ -917,81 +706,58 @@ bash /etc/hysteria/online.sh
 exit 0' >> /etc/rc.local
     sudo chmod +x /etc/rc.local
     systemctl daemon-reload
-    sudo systemctl enable pandavpnunite
-    sudo systemctl start pandavpnunite.service
+    sudo systemctl enable michaele
+    sudo systemctl start michaele.service
     
     mkdir -m 777 /root/.web
-echo "Installation success: Pandavpnunite... " >> /root/.web/index.php
+echo "Made with love by: Michaele Abalos... " >> /root/.web/index.php
 
-( set -o posix ; set ) | grep PORT > /root/.ports
-sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 > NAMESERVER = $(cat /root/ns.txt)|g" /root/.ports
+echo "tcp_port=TCP_PORT
+udp_port=UDP_PORT
+socket_port=80
+squid_port=8080
+hysteria_port=5666
+tcp_ssl_port=1194
+udp_ssl_port=442" >> /root/.ports
 
+sed -i "s|TCP_PORT|$PORT_TCP|g" /root/.ports
+sed -i "s|UDP_PORT|$PORT_UDP|g" /root/.ports
+
+sed -i "s|SERVERIP|$server_ip|g" /etc/.counter
   }&>/dev/null
 }
 
 start_service () {
+clear
 echo 'Starting..'
 {
 
-sudo crontab -l | { echo "SHELL=/bin/bash
-* * * * * /bin/bash /root/auto >/dev/null 2>&1
-0 * * * * /bin/bash /bin/dnsttauto.sh >/dev/null 2>&1
-* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart"; } | crontab -
+sudo crontab -l | { echo "* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart"; } | crontab -
 sudo systemctl restart cron
 } &>/dev/null
 clear
-service dropbear restart
-service stunnel4 restart
-service squid restart 
 systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
-systemctl restart openvpn@server.service
-systemctl restart openvpn@server2.service  
-killall screen 
-screen -dmS socks python /etc/socks.py 80
-screen -dmS websocket python /usr/local/sbin/websocket.py 8081
-screen -dmS proxy python /usr/local/sbin/proxy.py 8010
-screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
-
-cat /root/.ports
-screen -list
-
-rm -f /etc/.systemlink
-echo 'DNS=1.1.1.1
-DNSStubListener=no' >> /etc/resolv.conf
-sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
-
 history -c;
-
+rm /etc/.systemlink
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo '#############################################
-#         Authentication file system        #
-#       Setup by: Pandavpn Unite            #
-#       Server System: Panda VPN 	        #
-#            owner: Pandavpnunite      	    #
-#############################################'
+echo '                                                              
+      ░██████╗░██╗███████╗
+      ██╔════╝░██║██╔════╝
+      ██║░░██╗░██║█████╗░░
+      ██║░░╚██╗██║██╔══╝░░
+      ╚██████╔╝██║███████╗
+      ░╚═════╝░╚═╝╚══════╝       
+                                                                   
+ '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-netstat -tupln
+netstat -tpln
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo -e " \033[0;31m Server will secure this server and reboot after 10 seconds!! \033[0m"
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+sleep 10
+reboot
 }
-
-server_authentication(){
-    mkdir -p /etc/authorization/pandavpnunite
-    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/server_auth.sh -O /etc/authorization/pandavpnunite/server_auth.sh
-    chmod +x /etc/authorization/pandavpnunite/server_auth.sh
-
-    #dropbear
-    echo "
-DROPBEAR_CUSTOM_AUTH="/etc/authorization/pandavpnunite/server_auth.sh"
-    " >> /etc/default/dropbear
-    sudo service dropbear restart
-
-    #sshd
-    sed -i "s|#AuthorizedKeysCommand none|AuthorizedKeysCommand /etc/authorization/pandavpnunite/server_auth.sh|g" /etc/ssh/sshd_config
-    sed -i "s|#AuthorizedKeysCommandUser nobody|AuthorizedKeysCommandUser root|g" /etc/ssh/sshd_config
-    sudo service sshd restart
-
-}   
 
 install_require
 install_hysteria
@@ -1001,11 +767,4 @@ install_openvpn
 install_firewall_kvm
 install_stunnel
 install_rclocal
-install_dropbear
-install_websocket_and_socks
-install_dnstt
-# server_authentication
-view_ports
 start_service
-execute_to_screen
-
