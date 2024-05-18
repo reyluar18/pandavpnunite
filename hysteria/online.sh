@@ -1,0 +1,15 @@
+#!/bin/bash
+. /etc/hysteria/config.sh
+serverip=159.223.43.176
+
+
+tcpusers=$(sed -n -e "/^ROUTING_TABLE/p" /etc/openvpn/server/tcpclient.log | wc -l)
+udpusers=$(sed -n -e "/^ROUTING_TABLE/p" /etc/openvpn/server/udpclient.log | wc -l)
+total=$((tcpusers + udpusers))
+
+hysteria_fetch=$(curl -o /etc/hysteria/logs http://$serverip:5665/metrics &>/dev/null)
+hysteria_udpz=$(cat /etc/hysteria/logs | grep -w 'hysteria_active_conn{auth=' | grep -v '} 0')
+hysteriausers=$(echo "$hysteria_udpz" | grep '[^[:space:]]' | wc -l)
+
+mysql -u $USER -p$PASS -D $DB -h $HOST -e "UPDATE server_list SET online='$total', hysteria_online='$hysteriausers' WHERE server_ip='$serverip' "
+
