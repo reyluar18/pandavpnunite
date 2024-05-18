@@ -102,8 +102,8 @@ echo "Installing websocket and socks"
     chmod +x /usr/local/sbin/websocket.py
 
     wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
-    dos2unix /usr/local/sbin/websocket.py
-    chmod +x /usr/local/sbin/websocket.py
+    dos2unix /usr/local/sbin/proxy.py
+    chmod +x /usr/local/sbin/proxy.py
 }&>/dev/null
 
 
@@ -782,7 +782,7 @@ echo '{
 ' >> /etc/hysteria/config.json
 
 
-cat << EOM >/etc/hysteria/.auth.sh
+cat <<"EOM" >/etc/hysteria/.auth.sh
 #!/bin/bash
 . /etc/openvpn/login/config.sh
 
