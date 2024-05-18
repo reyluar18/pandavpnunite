@@ -121,8 +121,7 @@ $premium_deactived = "duration <= 0";
 $vip_deactived = "vip_duration <= 0";
 $private_deactived = "private_duration <= 0";
 
-$query2 = $mysqli->query("SELECT * FROM users WHERE ".$premium_deactived ." OR ".$vip_deactived." OR ".$private_deactived."
-");
+$query2 = $mysqli->query("SELECT * FROM users WHERE ".$premium_deactived."");
 if($query2->num_rows > 0)
 {
 	while($row2 = $query2->fetch_assoc())
