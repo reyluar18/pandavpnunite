@@ -19,14 +19,12 @@ PORT_WEBSOCKET='8081'
 PORT_PYPROXY='8010'
 
 #PORT OPENVPN
-PORT_TCP='1194';
-PORT_UDP='54';
+PORT_OPENVPN='1194';
 
 #SSL
-PORT_OPENVPN_TCP_SSL='443'
-PORT_OPENVPN_UDP_SSL='444'
-PORT_DROPBEAR_SSL='445'
-PORT_SSH_SSL='446'
+PORT_OPENVPN_SSL='443'
+PORT_DROPBEAR_SSL='444'
+PORT_SSH_SSL='445'
 
 #OTHERS
 PORT_DROPBEAR='442'
@@ -269,7 +267,7 @@ DNSStubListener=no' >> /etc/systemd/resolved.conf
 
 echo '#Openvpn Configuration by PandaVPNUnite Developer :)
 dev tun
-port PORT_UDP
+port PORT_OPENVPN
 proto udp
 server 10.10.0.0 255.255.0.0
 ca /etc/openvpn/easy-rsa/keys/ca.crt
@@ -309,11 +307,11 @@ status /etc/openvpn/server/udpclient.log
 status-version 2
 verb 3' > /etc/openvpn/server.conf
 
-sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/openvpn/server.conf
+sed -i "s|PORT_OPENVPN|$PORT_OPENVPN|g" /etc/openvpn/server.conf
 
 echo '#Openvpn Configuration by PandaVPNUnite Developer :)
 dev tun
-port PORT_TCP
+port PORT_OPENVPN
 proto tcp
 server 10.20.0.0 255.255.0.0
 ca /etc/openvpn/easy-rsa/keys/ca.crt
@@ -353,7 +351,7 @@ status /etc/openvpn/server/tcpclient.log
 status-version 2
 verb 3' > /etc/openvpn/server2.conf
 
-sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/openvpn/server2.conf
+sed -i "s|PORT_OPENVPN|$PORT_OPENVPN|g" /etc/openvpn/server2.conf
 
 cat <<EOM >/etc/openvpn/login/config.sh
 #!/bin/bash
@@ -610,14 +608,10 @@ iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
 sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-iptables -A INPUT -i eth0 -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -i eth0 -p udp --dport 54 -j ACCEPT
 iptables -A INPUT -i eth0 -p udp --dport 5300 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -i ens3 -p udp --dport 54 -j ACCEPT
 iptables -A INPUT -i ens3 -p udp --dport 5300 -j ACCEPT
-iptables -A PREROUTING -t nat -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i ens3 -p udp --dport 53 -j REDIRECT --to-port 5300
 iptables -A PREROUTING -t nat -i eth0 -p udp --dport 54 -j REDIRECT --to-port 5300
 iptables -A PREROUTING -t nat -i ens3 -p udp --dport 54 -j REDIRECT --to-port 5300
 iptables -t nat -A PREROUTING -p udp --dport 10000:50000 -j DNAT --to-destination :5666
@@ -726,21 +720,17 @@ connect = 127.0.0.1:22
 [dropbear]
 accept = PORT_DROPBEAR_SSL
 connect = 127.0.0.1:PORT_DROPBEAR
-[openvpn-tcp]
-connect = PORT_TCP  
-accept = PORT_OPENVPN_TCP_SSL 
-[openvpn-udp]
-connect = PORT_UDP
-accept = PORT_OPENVPN_UDP_SSL
+[openvpn]
+connect = PORT_OPENVPN  
+accept = PORT_OPENVPN_SSL 
+
 " >> stunnel.conf
 
-sed -i "s|PORT_TCP|$PORT_TCP|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_UDP|$PORT_UDP|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_OPENVPN|$PORT_OPENVPN|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_SSH_SSL|$PORT_SSH_SSL|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_DROPBEAR_SSL|$PORT_DROPBEAR_SSL|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_DROPBEAR|$PORT_DROPBEAR|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_OPENVPN_TCP_SSL|$PORT_OPENVPN_TCP_SSL|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_OPENVPN_UDP_SSL|$PORT_OPENVPN_UDP_SSL|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_OPENVPN_SSL|$PORT_OPENVPN_SSL|g" /etc/stunnel/stunnel.conf
 
 cd /etc/default && rm stunnel4
 
