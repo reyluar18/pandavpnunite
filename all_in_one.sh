@@ -1042,6 +1042,10 @@ SHELL=/bin/bash
 * * * * * /bin/bash /root/auto >/dev/null 2>&1
 0 * * * * /bin/bash /bin/dnsttauto.sh >/dev/null 2>&1
 * * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
+* * * * * /bin/bash /etc/hysteria/online.sh >/dev/null 2>&1
+* * * * * /bin/bash /etc/hysteria/ws.sh >/dev/null 2>&1
+* * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/dev/null 2>&1
+
 "; 
 } | crontab -
 
