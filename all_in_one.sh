@@ -699,7 +699,7 @@ accept = PORT_DROPBEAR_SSL
 connect = 127.0.0.1:PORT_DROPBEAR
 [openvpn]
 connect = PORT_OPENVPN  
-accept = PORT_OPENVPN_SSL 
+accept = PORT_OVPN_SSL 
 
 " >> stunnel.conf
 
@@ -707,7 +707,7 @@ sed -i "s|PORT_OPENVPN|$PORT_OPENVPN|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_SSH_SSL|$PORT_SSH_SSL|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_DROPBEAR_SSL|$PORT_DROPBEAR_SSL|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_DROPBEAR|$PORT_DROPBEAR|g" /etc/stunnel/stunnel.conf
-sed -i "s|PORT_OPENVPN_SSL|$PORT_OPENVPN_SSL|g" /etc/stunnel/stunnel.conf
+sed -i "s|PORT_OVPN_SSL|$PORT_OPENVPN_SSL|g" /etc/stunnel/stunnel.conf
 
 cd /etc/default && rm stunnel4
 
