@@ -43,7 +43,8 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-read -p "Please enter ns host for Slowdns: " NS
+# read -p "Please enter ns host for Slowdns: " NS
+NS="ns-sg.kathropavpn.store"
 
 install_require () {
 
@@ -51,7 +52,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y curl wget cron python2 libpython2-stdlib
 apt install -y iptables
-apt install -y openvpn netcat httpie php neofetch vnstat
+apt install -y openvpn netcat httpie php neofetch vnstat php-mysql
 apt install -y screen squid stunnel4 dropbear gnutls-bin python
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
 apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
@@ -135,13 +136,20 @@ EOM
 echo $NS > /root/ns.txt
 NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $NSNAME 127.0.0.1:$PORT_DROPBEAR
+screen -dmS slowdns-server ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $NSNAME 127.0.0.1:22
+
+cd /root/dnstt/dnstt-client
+go build
+cp /root/dnstt/dnstt-server/server.pub /root/dnstt/dnstt-client/server.pub
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
 
 cat <<EOM > /bin/dnsttauto.sh
 sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:$PORT_DROPBEAR
+screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
+
 EOM
 }&>/dev/null
 
@@ -585,12 +593,12 @@ iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
 sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-iptables -A INPUT -i eth0 -p udp --dport 54 -j ACCEPT
+iptables -A INPUT -i eth0 -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -i eth0 -p udp --dport 5300 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 54 -j ACCEPT
+iptables -A INPUT -i ens3 -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -i ens3 -p udp --dport 5300 -j ACCEPT
-iptables -A PREROUTING -t nat -i eth0 -p udp --dport 54 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i ens3 -p udp --dport 54 -j REDIRECT --to-port 5300
+iptables -A PREROUTING -t nat -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5300
+iptables -A PREROUTING -t nat -i ens3 -p udp --dport 53 -j REDIRECT --to-port 5300
 iptables -t nat -A PREROUTING -p udp --dport 10000:50000 -j DNAT --to-destination :5666
 iptables -t nat -A PREROUTING -i eth0 -p udp -m udp --dport 10000:50000 -j DNAT --to-destination :5666
 iptables -t nat -A PREROUTING -i ens3 -p udp -m udp --dport 10000:50000 -j DNAT --to-destination :5666
@@ -1031,7 +1039,8 @@ screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:$PORT_DROPBEAR
+screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
 screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
 
 cat /root/.ports
