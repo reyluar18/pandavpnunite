@@ -141,14 +141,14 @@ screen -dmS slowdns-server ./dnstt-server -udp :$PORT_DNSTT -privkey-file server
 cd /root/dnstt/dnstt-client
 go build
 cp /root/dnstt/dnstt-server/server.pub /root/dnstt/dnstt-client/server.pub
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:2222
 
 cat <<EOM > /bin/dnsttauto.sh
 sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:2222
 
 EOM
 }&>/dev/null
@@ -1040,7 +1040,7 @@ screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $(cat /root/ns.txt) 127.0.0.1:2222
 screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
 
 cat /root/.ports
