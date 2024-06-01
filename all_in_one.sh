@@ -43,8 +43,8 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-# read -p "Please enter ns host for Slowdns: " NS
-NS="ns-sg.kathropavpn.store"
+read -p "Please enter ns host for Slowdns: " NS
+# NS="ns-sg.kathropavpn.store"
 
 install_require () {
 
