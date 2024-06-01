@@ -50,7 +50,7 @@ install_require () {
 
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y curl wget cron python2 libpython2-stdlib
+apt install -y curl wget cron python2 libpython2-stdlib curl unzip
 apt install -y iptables
 apt install -y openvpn netcat httpie php neofetch vnstat php-mysql
 apt install -y screen squid stunnel4 dropbear gnutls-bin python
@@ -1000,8 +1000,74 @@ sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2
   }&>/dev/null
 }
 
+install_v2ray(){
+curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+sudo bash install-release.sh
+
+sudo systemctl enable v2ray
+sudo systemctl restart v2ray
+
+wget -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
+chmod +x /etc/authorization/pandavpnunite/v2ray.sh
+
+cat << EOF > /usr/local/etc/v2ray/default-config.json
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/var/log/v2ray/access.log",
+    "error": "/var/log/v2ray/error.log"
+  },
+  "inbounds": [
+    {
+      "port": 10000,
+      "listen":"127.0.0.1",
+      "protocol": "vmess",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+        "path": "/ray"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ]
+}
+EOF
+
+cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
+/usr/bin/php /etc/authorization/pandavpnunite/connection.php
+/bin/bash /etc/authorization/pandavpnunite/v2ray.sh
+
+sudo systemctl restart v2ray
+
+sudo apt install -y nginx
+
+#-- add v2ray config default
+rm -rf /etc/nginx/conf.d/v2ray.conf
+wget -O /etc/nginx/conf.d/v2ray.conf "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-v2ray.sh" 
+
+#--- add default 
+rm -rf /etc/nginx/sites-available/default
+wget -O /etc/nginx/sites-available/default "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-default.sh" 
+
+sudo nginx -t
+sudo systemctl enable nginx
+sudo systemctl reload nginx
+sudo systemctl restart nginx
+
+
+}
+
 server_authentication(){
-mkdir -p /etc/authorization/pandavpnunite
+mkdir -p /etc/authorization/pandavpnunite/log
 wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
 }   
 
@@ -1010,17 +1076,17 @@ echo 'Starting..'
 {
 sudo crontab -l | { echo "
 SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 * * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
-* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php
-* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh
-* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh
-* * * * * /bin/bash /root/auto >/dev/null 2>&1
-0 * * * * /bin/bash /bin/dnsttauto.sh >/dev/null 2>&1
-* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
-* * * * * /bin/bash /etc/hysteria/online.sh >/dev/null 2>&1
-* * * * * /bin/bash /etc/hysteria/ws.sh >/dev/null 2>&1
-* * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/dev/null 2>&1
-
+* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php >/etc/authorization/pandavpnunite/log/connection.log 2>&1
+* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
+* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
+* * * * * /bin/bash /root/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
+0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
+# * * * * * /bin/bash /etc/hysteria/online.sh >/etc/authorization/pandavpnunite/log/hysteria_online.log 2>&1
+# * * * * * /bin/bash /etc/hysteria/ws.sh >/etc/authorization/pandavpnunite/log/hysteria_ws.log 2>&1
+# * * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/etc/authorization/pandavpnunite/log/hysteria_monitor.log 2>&1
+0 * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
 "; 
 } | crontab -
 
@@ -1034,6 +1100,7 @@ systemctl enable hysteria-server.service
 systemctl restart hysteria-server.service
 systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service  
+systemctl restart v2ray
 killall screen 
 screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
@@ -1078,6 +1145,7 @@ install_dropbear
 install_websocket_and_socks
 install_dnstt
 server_authentication
+install_v2ray
 view_ports
 start_service
 execute_to_screen
