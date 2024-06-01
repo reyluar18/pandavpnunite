@@ -1069,6 +1069,11 @@ sudo systemctl restart nginx
 server_authentication(){
 mkdir -p /etc/authorization/pandavpnunite/log
 wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
+
+#--- execute asap
+/usr/bin/php /etc/authorization/pandavpnunite/connection.php
+/bin/bash /etc/authorization/pandavpnunite/active.sh
+
 }   
 
 start_service () {
