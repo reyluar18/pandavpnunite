@@ -210,14 +210,15 @@ icp_access allow all
 always_direct allow all
 visible_hostname PandaVPNUnite-Proxy
 error_directory /usr/share/squid/errors/English' >> squid.conf
-    sed -i "s|SQUID_PORT_1|$PORT_SQUID_1|g" squid.conf
-    sed -i "s|SQUID_PORT_2|$PORT_SQUID_2|g" squid.conf
-    sed -i "s|SQUID_PORT_3|$PORT_SQUID_3|g" squid.conf
-    cd /usr/share/squid/errors/English
-    rm ERR_INVALID_URL
-    echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
-    chmod 755 *
-    /etc/init.d/squid start
+sed -i "s|SQUID_PORT_1|$PORT_SQUID_1|g" squid.conf
+sed -i "s|SQUID_PORT_2|$PORT_SQUID_2|g" squid.conf
+sed -i "s|SQUID_PORT_3|$PORT_SQUID_3|g" squid.conf
+mkdir -p /usr/share/squid/errors/English
+cd /usr/share/squid/errors/English
+rm -rf ERR_INVALID_URL
+echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
+chmod 755 *
+/etc/init.d/squid start
 cd /etc || exit
 wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks_3.py' -O /etc/socks.py
 dos2unix /etc/socks.py
@@ -654,7 +655,7 @@ Vos09yRGACyV4MDWY1Zc0VaWiYHz4Wq72u6UmAqu7TPISuifTPmK/C6+bdAJKhEF
 x+GF1SxqdSmNJDD4+VSc+/POrLk5teS70kMgRgRYf12J3OSftXtY2A4J93ZlhlRA
 DwR9nm2zeljwuH9aKgw+BPiQ8ZVKMoJLJ/Khmkaxj4v7Q6mwegkjXh+UwBmk9RtT
 f3hqH8xsT0xyX6kKg+id/rzjeHyCcWcNoodoCF2IzovhbgA=
------END CERTIFICATE-----" >> stunnel.pem
+-----END CERTIFICATE-----" > stunnel.pem
 rm -f stunnel.conf
 mkdir -p /usr/local/var/run/
 echo "debug = 0
@@ -1106,6 +1107,7 @@ netstat -tupln
  
 
 install_require
+install_dropbear
 install_hysteria
 setup_ssl
 install_squid
@@ -1113,7 +1115,6 @@ install_openvpn
 install_firewall_kvm
 install_stunnel
 install_rclocal
-install_dropbear
 install_websocket_and_socks
 install_dnstt
 server_authentication

@@ -46,25 +46,250 @@ echo -e " \033[0;35m════════════════════
 read -p "Please enter ns host for Slowdns: " NS
 # NS="ns-sg.kathropavpn.store"
 
+echo $NS > /root/ns.txt
+
+
 install_require () {
 
-export DEBIAN_FRONTEND=noninteractive
-apt update
-apt install -y curl wget cron python2 libpython2-stdlib curl unzip
-apt install -y iptables
-apt install -y openvpn netcat httpie php neofetch vnstat php-mysql
-apt install -y screen squid stunnel4 dropbear gnutls-bin python
-apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
-apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
+dnf update -y
+dnf install -y epel-release
+dnf install -y curl wget cronie unzip
+dnf install -y iptables-services
+sudo yum install snapd
+sudo systemctl enable --now snapd.socket
+sudo ln -s /var/lib/snapd/snap /snap
+dnf install -y openvpn nc php-cli neofetch vnstat php-mysqlnd
+sudo snap install http
+dnf install -y screen squid stunnel dropbear gnutls-utils python3
+dnf install -y dos2unix nano unzip jq virt-what net-tools mysql
+dnf install -y mlocate rpm-build audit-libs-devel gcc make fail2ban
 mkdir -p /etc/update-motd.d
-apt-get install inxi screenfetch lolcat figlet -y
-apt-get install lsof git iptables-persistent -y
+dnf install -y inxi figlet
+dnf install -y lsof git iptables-services firewalld
+snap install lolcat
+# git clone git://github.com/KittyKatt/screenFetch.git screenfetch
+# cp screenfetch/screenfetch-dev /usr/bin/screenfetch
+# chmod +x /usr/bin/screenfetch
+
 
 clear
 }
 
-install_dropbear(){
 
+install_hysteria(){
+clear
+echo 'Installing hysteria.'
+{
+wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria.sh; chmod +x ~/hysteria.sh; ./hysteria.sh --version v1.3.5
+
+rm -f /etc/hysteria/config.json
+
+echo '{
+  "listen": ":PORT_HYSTERIA",
+  "cert": "/etc/hysteria/server.crt",
+  "key": "/etc/hysteria/server.key",
+  "up_mbps": 100,
+  "down_mbps": 100,
+  "disable_udp": false,
+  "obfs": "pandavpnunite",
+  "auth": {
+    "mode": "external",
+    "config": {
+    "cmd": "./.auth.sh"
+    }
+  },
+  "prometheus_listen": ":5665",
+}
+' >> /etc/hysteria/config.json
+
+
+cat <<"EOM" >/etc/hysteria/.auth.sh
+#!/bin/bash
+. /etc/openvpn/login/config.sh
+
+if [ $# -ne 4 ]; then
+    echo "invalid number of arguments"
+    exit 1
+fi
+
+ADDR=$1
+AUTH=$2
+SEND=$3
+RECV=$4
+
+USERNAME=$(echo "$AUTH" | cut -d ":" -f 1)
+PASSWORD=$(echo "$AUTH" | cut -d ":" -f 2)
+
+Query="SELECT user_name FROM users WHERE user_name='$USERNAME' AND auth_vpn=md5('$PASSWORD') AND status='live' AND is_freeze=0 AND is_ban=0 AND (duration > 0 OR vip_duration > 0 OR private_duration > 0)"
+user_name=`mysql -u $USER -p$PASS -D $DB -h $HOST -sN -e "$Query"`
+[ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ] && echo "user : $username" && echo 'authentication ok.' && exit 0 || echo 'authentication failed.'; exit 1
+EOM
+
+sed -i "s|PORT_HYSTERIA|$PORT_HYSTERIA|g" /etc/hysteria/config.json
+chmod 755 /etc/hysteria/config.json
+touch /etc/hysteria/logs
+sysctl -w net.core.rmem_max=16777216
+sysctl -w net.core.wmem_max=16777216
+
+#-- monitoring 
+wget -O /etc/hysteria/monitor.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/monitor.sh"
+wget -O /etc/hysteria/online.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/online.sh"
+
+chmod +x /etc/hysteria/monitor.sh
+chmod +x /etc/hysteria/online.sh
+
+wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
+chmod +x /usr/bin/badvpn-udpgw
+ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
+} &>/dev/null
+}
+
+setup_ssl() {
+#Creating Hysteria CERT
+cat << EOF > /etc/hysteria/server.crt
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=PH, ST=MA, L=Antipolo City, O=TKNetwork, OU=TKNerwork, CN=TKNetwork CA/name=TKNetwork/emailAddress=ericlaylay@gmail.com
+        Validity
+            Not Before: Sep 20 03:54:08 2022 GMT
+            Not After : Sep 17 03:54:08 2032 GMT
+        Subject: C=PH, ST=CA, L=Antipolo City, O=TKNetwork, OU=TKNerwork, CN=TKNetwork/name=TKNetwork/emailAddress=ericlaylay@gmail.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:b5:eb:a1:de:45:39:54:a9:12:db:91:b0:68:ac:
+                    77:39:7e:4d:ee:5c:ae:6c:2f:57:a7:70:a6:19:39:
+                    19:b0:46:75:6d:50:81:9d:3c:43:5a:21:49:84:b1:
+                    fa:68:67:2e:05:ba:ec:e1:08:3b:70:07:77:32:03:
+                    19:65:7c:af:d5:10:97:8a:3a:af:11:66:ee:42:b2:
+                    90:b5:1a:34:28:55:76:0f:a3:ac:f3:e9:1d:fc:d7:
+                    5f:7c:89:50:3b:7e:0f:49:61:97:b7:79:b5:c6:29:
+                    2a:c5:e3:ef:38:43:77:12:cb:06:d0:e1:2c:4a:38:
+                    fe:0a:33:ec:2c:b7:79:bf:b9:fa:d7:ea:2c:9f:02:
+                    4f:10:eb:0a:6f:05:5a:50:01:dc:50:93:71:03:b9:
+                    63:34:53:9e:30:9d:23:64:66:e8:9c:73:19:85:39:
+                    b6:79:b4:55:1d:9d:2a:e0:df:4c:b2:5a:c2:e9:0e:
+                    59:a2:3a:70:34:6a:9c:8a:09:34:1d:5e:29:a9:b6:
+                    5b:16:ce:9e:c5:6c:50:d6:4d:10:09:60:f6:c9:00:
+                    81:29:e3:a1:4c:10:fb:fe:a5:14:d6:b5:2a:e0:72:
+                    50:2f:50:dc:bc:34:8d:ca:e2:fb:78:06:4d:b5:cd:
+                    fe:9a:cd:2a:b7:c9:79:32:66:4a:bf:d3:d0:04:25:
+                    9e:d5
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Cert Type: 
+                SSL Server
+            Netscape Comment: 
+                Easy-RSA Generated Server Certificate
+            X509v3 Subject Key Identifier: 
+                28:1D:A2:5E:3A:50:2C:3A:E0:B0:54:57:D6:11:02:FC:D6:1F:FF:35
+            X509v3 Authority Key Identifier: 
+                keyid:DB:6B:D9:7E:CC:36:11:1E:67:E8:45:B0:07:26:88:17:F6:8B:F3:AB
+                DirName:/C=PH/ST=MA/L=Antipolo City/O=TKNetwork/OU=TKNerwork/CN=TKNetwork CA/name=TKNetwork/emailAddress=ericlaylay@gmail.com
+                serial:52:67:60:3D:A2:29:17:35:5F:CA:B9:4A:8E:E2:80:74:F3:CE:64:EB
+
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+            X509v3 Subject Alternative Name: 
+                DNS:[server]
+    Signature Algorithm: sha256WithRSAEncryption
+         0c:5a:d1:93:48:73:de:35:f0:1b:b5:88:71:be:ce:04:e0:f7:
+         c3:b1:ef:48:05:2f:20:ff:68:6c:e6:10:0f:d2:65:6b:57:e4:
+         cc:36:af:4c:ec:d4:0c:46:4c:76:5a:7d:20:74:92:67:41:5f:
+         74:27:3b:48:39:51:65:ff:86:3b:1b:6a:15:b1:11:99:45:cd:
+         03:0e:e2:46:5d:c0:19:e0:07:0c:18:1e:6e:a1:f6:f2:32:b5:
+         3d:91:27:0a:e8:ae:e5:22:a0:f1:87:9f:b8:ba:d8:eb:6b:2b:
+         82:8d:e4:2e:66:0a:2a:1f:f6:bb:ee:6a:92:8f:c7:77:0d:ee:
+         68:96:58:ce:52:c5:6a:c5:7a:24:fd:ee:83:ba:0b:4e:28:b6:
+         92:60:f1:ce:24:bc:9e:a5:ca:73:d3:cc:69:48:a4:8b:31:c3:
+         7f:41:d1:31:2d:1e:e8:c7:4f:5d:d6:c1:e8:8d:b7:44:49:0a:
+         5a:6c:ea:44:a3:70:19:12:2d:a9:d1:90:bd:3a:3d:4b:85:c0:
+         35:d0:03:94:1f:de:68:1c:a0:5d:f0:b9:6c:40:68:97:1a:25:
+         c1:5a:a0:cc:a9:51:68:d5:37:be:74:e4:23:0a:fd:74:92:54:
+         9e:2f:fc:65:56:d1:27:3b:05:01:b4:c1:b4:a9:10:8d:70:30:
+         a0:b6:74:55
+-----BEGIN CERTIFICATE-----
+MIIFazCCBFOgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBqjELMAkGA1UEBhMCUEgx
+CzAJBgNVBAgTAk1BMRYwFAYDVQQHEw1BbnRpcG9sbyBDaXR5MRIwEAYDVQQKEwlU
+S05ldHdvcmsxEjAQBgNVBAsTCVRLTmVyd29yazEVMBMGA1UEAxMMVEtOZXR3b3Jr
+IENBMRIwEAYDVQQpEwlUS05ldHdvcmsxIzAhBgkqhkiG9w0BCQEWFGVyaWNsYXls
+YXlAZ21haWwuY29tMB4XDTIyMDkyMDAzNTQwOFoXDTMyMDkxNzAzNTQwOFowgacx
+CzAJBgNVBAYTAlBIMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNQW50aXBvbG8gQ2l0
+eTESMBAGA1UEChMJVEtOZXR3b3JrMRIwEAYDVQQLEwlUS05lcndvcmsxEjAQBgNV
+BAMTCVRLTmV0d29yazESMBAGA1UEKRMJVEtOZXR3b3JrMSMwIQYJKoZIhvcNAQkB
+FhRlcmljbGF5bGF5QGdtYWlsLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBALXrod5FOVSpEtuRsGisdzl+Te5crmwvV6dwphk5GbBGdW1QgZ08Q1oh
+SYSx+mhnLgW67OEIO3AHdzIDGWV8r9UQl4o6rxFm7kKykLUaNChVdg+jrPPpHfzX
+X3yJUDt+D0lhl7d5tcYpKsXj7zhDdxLLBtDhLEo4/goz7Cy3eb+5+tfqLJ8CTxDr
+Cm8FWlAB3FCTcQO5YzRTnjCdI2Rm6JxzGYU5tnm0VR2dKuDfTLJawukOWaI6cDRq
+nIoJNB1eKam2WxbOnsVsUNZNEAlg9skAgSnjoUwQ+/6lFNa1KuByUC9Q3Lw0jcri
++3gGTbXN/prNKrfJeTJmSr/T0AQlntUCAwEAAaOCAZswggGXMAkGA1UdEwQCMAAw
+EQYJYIZIAYb4QgEBBAQDAgZAMDQGCWCGSAGG+EIBDQQnFiVFYXN5LVJTQSBHZW5l
+cmF0ZWQgU2VydmVyIENlcnRpZmljYXRlMB0GA1UdDgQWBBQoHaJeOlAsOuCwVFfW
+EQL81h//NTCB6gYDVR0jBIHiMIHfgBTba9l+zDYRHmfoRbAHJogX9ovzq6GBsKSB
+rTCBqjELMAkGA1UEBhMCUEgxCzAJBgNVBAgTAk1BMRYwFAYDVQQHEw1BbnRpcG9s
+byBDaXR5MRIwEAYDVQQKEwlUS05ldHdvcmsxEjAQBgNVBAsTCVRLTmVyd29yazEV
+MBMGA1UEAxMMVEtOZXR3b3JrIENBMRIwEAYDVQQpEwlUS05ldHdvcmsxIzAhBgkq
+hkiG9w0BCQEWFGVyaWNsYXlsYXlAZ21haWwuY29tghRSZ2A9oikXNV/KuUqO4oB0
+885k6zATBgNVHSUEDDAKBggrBgEFBQcDATALBgNVHQ8EBAMCBaAwEwYDVR0RBAww
+CoIIW3NlcnZlcl0wDQYJKoZIhvcNAQELBQADggEBAAxa0ZNIc9418Bu1iHG+zgTg
+98Ox70gFLyD/aGzmEA/SZWtX5Mw2r0zs1AxGTHZafSB0kmdBX3QnO0g5UWX/hjsb
+ahWxEZlFzQMO4kZdwBngBwwYHm6h9vIytT2RJwroruUioPGHn7i62OtrK4KN5C5m
+Ciof9rvuapKPx3cN7miWWM5SxWrFeiT97oO6C04otpJg8c4kvJ6lynPTzGlIpIsx
+w39B0TEtHujHT13WweiNt0RJClps6kSjcBkSLanRkL06PUuFwDXQA5Qf3mgcoF3w
+uWxAaJcaJcFaoMypUWjVN7505CMK/XSSVJ4v/GVW0Sc7BQG0wbSpEI1wMKC2dFU=
+-----END CERTIFICATE-----
+EOF
+
+cat << EOF > /etc/hysteria/server.key
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC166HeRTlUqRLb
+kbBorHc5fk3uXK5sL1encKYZORmwRnVtUIGdPENaIUmEsfpoZy4FuuzhCDtwB3cy
+AxllfK/VEJeKOq8RZu5CspC1GjQoVXYPo6zz6R381198iVA7fg9JYZe3ebXGKSrF
+4+84Q3cSywbQ4SxKOP4KM+wst3m/ufrX6iyfAk8Q6wpvBVpQAdxQk3EDuWM0U54w
+nSNkZuiccxmFObZ5tFUdnSrg30yyWsLpDlmiOnA0apyKCTQdXimptlsWzp7FbFDW
+TRAJYPbJAIEp46FMEPv+pRTWtSrgclAvUNy8NI3K4vt4Bk21zf6azSq3yXkyZkq/
+09AEJZ7VAgMBAAECggEBALI+EPcKtEVy8vsXH9UvRhGa4xhszqlJKYTxJo0IGVdR
+cbSNcLFyXjts6e+Nwl+Q2NLcd0N1IWd+qRbjWnrJVC5ad2AEZ4uRYlkPRCFtbzUl
+putj3w2Mlsko7HHEyEvCE5A+grxOD//8TeBemAB0ebJ8Ik1+kjqW5LFydjDKBAwI
+sYjXpYGkMST9rqG82EToQn9jL5Ncby35Ls3owzWDfd/1Y4NQmk6gO09spoMzWJpS
+mSiV+w83QxxJtOgT00O9NuDz9skotW3v2xWTZue0BzMirCTQWPiFRL1476/O9KYD
+KUBAcWynC/PE4ub0lMfaesdrggjRoDYvaQp3xLx/6HECgYEA4siN9t7Ogwhf/4X7
+BAN+2OSRWRW8tn9wzzNAPzhjs8igm4W+C4lQtMmW9eFOHuRj6TiWp4w36m4cs5VF
+eK39mp3/nyd9l68bFjGxw3XZsI/5bTGgcrSVAAAGp65xadI3+1Ozy7OmFoRF/Gkv
+X7+/DyWz5nb9yAH/N69vPpVek8sCgYEAzVt4qpMc5tX6tMxCAC1ZUFo8fwSZndmk
+jDTgb2G2O1YIqrYHqVjtwMQiDxvBGdkVJuy8QQQHM6YCD3o1Jq56bjvY1IlumXCW
+0YeKfSeqfXN/nBCkyZxa79DkQSPeYEjFTFABVe/SEEcasn8HrlyygtFT+nLCcEz/
+V1ekP5Mmg98CgYEApsGOEh9XfuZjoIKmRxdC6L15WyYus4sWKmWnMlWGiqZV4sX/
+LoB0BdvN01MunGyYQt/Hd8AVRZ5eIHb8tHZL6quPUTo6kZTCuBkme3Fm9vuHDxHU
+x0Od5HggbKBK6OMZIwczR+/7iscMp0O5ABEArmSs2iRZC/7b6dhoVn6DIu0CgYA+
+tOvHylxM8JI5mxWcUDyxmJxYfOMbnFXuqkbOPBwVSlQjLKpyP8F512o/Cs6QQgV/
+eVKS19QLJWoDp+GLCkRAXO39GGo5WHP1T1oulWouHJKe6UYoeiIakMLiUT2aUR5O
+CzAdObn/VncEgl2qFIw9/gWSuHA/MoPV++EfuKNOKQKBgDbyYfG3JESaLpaEiPED
+UQDv4iVBzaqA3sMpmpA2YRIUZE4ZzSuiVMxGHfhAvueuiMwyzqsLe0BOgCNtJDg3
+o4CmMhs3Wlw5FiOru1LxQY//65wi5q8+rNF4DR3oUKoVGb1PD3Gm8ZsxirhMOCrc
+sKKWTJk08giHse+yqTKQ05uR
+-----END PRIVATE KEY-----
+EOF
+
+chmod 755 /etc/hysteria/config.json
+chmod 755 /etc/hysteria/server.crt
+chmod 755 /etc/hysteria/server.key
+
+
+}
+
+
+
+install_dropbear() {
 /bin/cat <<"EOM" >/etc/update-motd.d/01-custom
 #!/bin/sh
 
@@ -85,12 +310,11 @@ chmod +x /etc/update-motd.d/01-custom
 rm -f /etc/motd
 touch /etc/motd.tail
 
-sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-sed -i "s|DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_DROPBEAR|g" /etc/default/dropbear
+sed -i 's/NO_START=1/NO_START=0/g' /etc/sysconfig/dropbear
+sed -i "s|DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_DROPBEAR|g" /etc/sysconfig/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
-service dropbear restart
-
+systemctl restart dropbear
 }
 
 install_websocket_and_socks(){
@@ -104,10 +328,7 @@ echo "Installing websocket and socks"
     dos2unix /usr/local/sbin/proxy.py
     chmod +x /usr/local/sbin/proxy.py
 }&>/dev/null
-
-
 }
-
 
 install_dnstt(){
 
@@ -181,46 +402,12 @@ sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /root/auto
 bash /root/auto
 }
 
+
 install_squid(){
 clear
 echo 'Installing proxy.'
 {
-sudo cp /etc/apt/sources.list /etc/apt/sources.list_backup
-echo "deb http://deb.debian.org/debian bullseye main contrib non-free
-deb-src http://deb.debian.org/debian bullseye main contrib non-free
-deb http://deb.debian.org/debian bullseye-updates main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
-deb http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb http://security.debian.org/debian-security/ bullseye-security main contrib non-free
-deb-src http://security.debian.org/debian-security/ bullseye-security main contrib non-free" >> /etc/apt/sources.list
-    apt update
-    apt install -y gcc-4.9 g++-4.9
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 10
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 10
-    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30
-    update-alternatives --set cc /usr/bin/gcc
-    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
-    update-alternatives --set c++ /usr/bin/g++
-    cd /usr/src
-    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid-3.1.23.tar.gz
-    tar zxvf squid-3.1.23.tar.gz
-    cd squid-3.1.23
-    ./configure --prefix=/usr \
-      --localstatedir=/var/squid \
-      --libexecdir=/usr/lib/squid \
-      --srcdir=. \
-      --datadir=/usr/share/squid \
-      --sysconfdir=/etc/squid \
-      --with-default-user=proxy \
-      --with-logdir=/var/log/squid \
-      --with-pidfile=/var/run/squid.pid
-    make -j$(nproc)
-    make install
-    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid.sh
-    chmod +x /etc/init.d/squid
-    update-rc.d squid defaults
-    chown -cR proxy /var/log/squid
+    service squid stop
     squid -z
     cd /etc/squid/
     rm squid.conf
@@ -249,15 +436,14 @@ cd /usr/share/squid/errors/English
 rm -rf ERR_INVALID_URL
 echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>SECURE PROXY</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"/><link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css" media="screen"><link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"><style>body{font-family: "Press Start 2P", cursive;}.fn-color{color: #ffff; background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; -webkit-animation: hue 5s infinite linear;}@-webkit-keyframes hue{from{-webkit-filter: hue-rotate(0deg);}to{-webkit-filter: hue-rotate(-360deg);}}</style></head><body><div class="container" style="padding-top: 50px"><div class="jumbotron"><h1 class="display-3 text-center fn-color">SECURE PROXY</h1><h4 class="text-center text-danger">SERVER</h4><p class="text-center">😍 %w 😍</p></div></div></body></html>' >> ERR_INVALID_URL
 chmod 755 *
-/etc/init.d/squid start
+systemctl start squid
 cd /etc || exit
-wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks.py' -O /etc/socks.py
+wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks_3.py' -O /etc/socks.py
 dos2unix /etc/socks.py
 chmod +x /etc/socks.py
-rm /etc/apt/sources.list
-sudo cp /etc/apt/sources.list_backup /etc/apt/sources.list
  }&>/dev/null
 }
+
 
 install_openvpn()
 {
@@ -561,6 +747,7 @@ install_firewall_kvm () {
 clear
 echo "Installing iptables."
 {
+# Adjust sysctl configuration
 echo "net.ipv4.conf.default.rp_filter = 1
 net.ipv4.conf.default.accept_source_route = 0
 kernel.sysrq = 0
@@ -586,53 +773,27 @@ net.ipv4.tcp_max_syn_backlog = 16384" > /etc/sysctl.conf
 
 sysctl -p
 
-iptables -F; iptables -X; iptables -Z
-iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-iptables -A INPUT -i eth0 -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -i eth0 -p udp --dport 5300 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -i ens3 -p udp --dport 5300 -j ACCEPT
-iptables -A PREROUTING -t nat -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5300
-iptables -A PREROUTING -t nat -i ens3 -p udp --dport 53 -j REDIRECT --to-port 5300
-iptables -t nat -A PREROUTING -p udp --dport 10000:50000 -j DNAT --to-destination :5666
-iptables -t nat -A PREROUTING -i eth0 -p udp -m udp --dport 10000:50000 -j DNAT --to-destination :5666
-iptables -t nat -A PREROUTING -i ens3 -p udp -m udp --dport 10000:50000 -j DNAT --to-destination :5666
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.10.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.20.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o "$server_interface" -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o "$server_interface" -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o eth0 -j SNAT --to-source "$server_ip"
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o ens3 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.30.0.0/16 -o ens3 -j SNAT --to-source "$server_ip"
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
-echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-mkdir -p /etc/iptables
-iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state NEW -m recent --update --seconds 30 --hitcount 10 --name DEFAULT --mask 255.255.255.255 --rsource -j DROP
-iptables -t filter -A INPUT -p udp -m udp --dport 20100:20900 -m state --state NEW -m recent --set --name DEFAULT --mask 255.255.255.255 --rsource
+# Adjust firewall rules using firewalld
+# You may need to install firewalld if it's not installed already: sudo dnf install firewalld
+sudo systemctl enable firewalld
+sudo systemctl restart firewalld
+
+firewall-cmd --zone=public --permanent --add-port=53/udp
+firewall-cmd --zone=public --permanent --add-port=5300/udp
+firewall-cmd --zone=public --permanent --add-port=20100-20900/udp
+firewall-cmd --reload
+
+mkdir -p /etc/iptables/
 
 iptables-save > /etc/iptables/rules.v4
 ip6tables-save > /etc/iptables/rules.v6
 iptables-save > /etc/iptables_rules.v4
 ip6tables-save > /etc/iptables_rules.v6
+
 }&>/dev/null
 }
+
+
 
 install_stunnel() {
   {
@@ -718,251 +879,32 @@ sed -i "s|PORT_DROPBEAR_SSL|$PORT_DROPBEAR_SSL|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_DROPBEAR|$PORT_DROPBEAR|g" /etc/stunnel/stunnel.conf
 sed -i "s|PORT_OVPN_SSL|$PORT_OPENVPN_SSL|g" /etc/stunnel/stunnel.conf
 
-cd /etc/default && rm stunnel4
+cd /etc/default && rm stunnel
 
 echo 'ENABLED=1
 FILES="/etc/stunnel/*.conf"
 OPTIONS=""
 PPP_RESTART=0
-RLIMITS=""' >> stunnel4 
+RLIMITS=""' >> stunnel
 
-chmod 755 stunnel4
-sudo service stunnel4 restart
+chmod 755 stunnel
+sudo service stunnel restart
   } &>/dev/null
 }
 
-install_hysteria(){
-clear
-echo 'Installing hysteria.'
-{
-wget -N --no-check-certificate -q -O ~/hysteria.sh https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria.sh; chmod +x ~/hysteria.sh; ./hysteria.sh --version v1.3.5
-
-rm -f /etc/hysteria/config.json
-
-echo '{
-  "listen": ":PORT_HYSTERIA",
-  "cert": "/etc/hysteria/server.crt",
-  "key": "/etc/hysteria/server.key",
-  "up_mbps": 100,
-  "down_mbps": 100,
-  "disable_udp": false,
-  "obfs": "pandavpnunite",
-  "auth": {
-    "mode": "external",
-    "config": {
-    "cmd": "./.auth.sh"
-    }
-  },
-  "prometheus_listen": ":5665",
-}
-' >> /etc/hysteria/config.json
-
-
-cat <<"EOM" >/etc/hysteria/.auth.sh
-#!/bin/bash
-. /etc/openvpn/login/config.sh
-
-if [ $# -ne 4 ]; then
-    echo "invalid number of arguments"
-    exit 1
-fi
-
-ADDR=$1
-AUTH=$2
-SEND=$3
-RECV=$4
-
-USERNAME=$(echo "$AUTH" | cut -d ":" -f 1)
-PASSWORD=$(echo "$AUTH" | cut -d ":" -f 2)
-
-Query="SELECT user_name FROM users WHERE user_name='$USERNAME' AND auth_vpn=md5('$PASSWORD') AND status='live' AND is_freeze=0 AND is_ban=0 AND (duration > 0 OR vip_duration > 0 OR private_duration > 0)"
-user_name=`mysql -u $USER -p$PASS -D $DB -h $HOST -sN -e "$Query"`
-[ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ] && echo "user : $username" && echo 'authentication ok.' && exit 0 || echo 'authentication failed.'; exit 1
-EOM
-
-sed -i "s|PORT_HYSTERIA|$PORT_HYSTERIA|g" /etc/hysteria/config.json
-chmod 755 /etc/hysteria/config.json
-touch /etc/hysteria/logs
-sysctl -w net.core.rmem_max=16777216
-sysctl -w net.core.wmem_max=16777216
-
-#-- monitoring 
-wget -O /etc/hysteria/monitor.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/monitor.sh"
-wget -O /etc/hysteria/online.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/online.sh"
-
-chmod +x /etc/hysteria/monitor.sh
-chmod +x /etc/hysteria/online.sh
-
-wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
-chmod +x /usr/bin/badvpn-udpgw
-ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
-} &>/dev/null
-}
-
-setup_ssl() {
-#Creating Hysteria CERT
-cat << EOF > /etc/hysteria/server.crt
-Certificate:
-    Data:
-        Version: 3 (0x2)
-        Serial Number: 1 (0x1)
-        Signature Algorithm: sha256WithRSAEncryption
-        Issuer: C=PH, ST=MA, L=Antipolo City, O=TKNetwork, OU=TKNerwork, CN=TKNetwork CA/name=TKNetwork/emailAddress=ericlaylay@gmail.com
-        Validity
-            Not Before: Sep 20 03:54:08 2022 GMT
-            Not After : Sep 17 03:54:08 2032 GMT
-        Subject: C=PH, ST=CA, L=Antipolo City, O=TKNetwork, OU=TKNerwork, CN=TKNetwork/name=TKNetwork/emailAddress=ericlaylay@gmail.com
-        Subject Public Key Info:
-            Public Key Algorithm: rsaEncryption
-                RSA Public-Key: (2048 bit)
-                Modulus:
-                    00:b5:eb:a1:de:45:39:54:a9:12:db:91:b0:68:ac:
-                    77:39:7e:4d:ee:5c:ae:6c:2f:57:a7:70:a6:19:39:
-                    19:b0:46:75:6d:50:81:9d:3c:43:5a:21:49:84:b1:
-                    fa:68:67:2e:05:ba:ec:e1:08:3b:70:07:77:32:03:
-                    19:65:7c:af:d5:10:97:8a:3a:af:11:66:ee:42:b2:
-                    90:b5:1a:34:28:55:76:0f:a3:ac:f3:e9:1d:fc:d7:
-                    5f:7c:89:50:3b:7e:0f:49:61:97:b7:79:b5:c6:29:
-                    2a:c5:e3:ef:38:43:77:12:cb:06:d0:e1:2c:4a:38:
-                    fe:0a:33:ec:2c:b7:79:bf:b9:fa:d7:ea:2c:9f:02:
-                    4f:10:eb:0a:6f:05:5a:50:01:dc:50:93:71:03:b9:
-                    63:34:53:9e:30:9d:23:64:66:e8:9c:73:19:85:39:
-                    b6:79:b4:55:1d:9d:2a:e0:df:4c:b2:5a:c2:e9:0e:
-                    59:a2:3a:70:34:6a:9c:8a:09:34:1d:5e:29:a9:b6:
-                    5b:16:ce:9e:c5:6c:50:d6:4d:10:09:60:f6:c9:00:
-                    81:29:e3:a1:4c:10:fb:fe:a5:14:d6:b5:2a:e0:72:
-                    50:2f:50:dc:bc:34:8d:ca:e2:fb:78:06:4d:b5:cd:
-                    fe:9a:cd:2a:b7:c9:79:32:66:4a:bf:d3:d0:04:25:
-                    9e:d5
-                Exponent: 65537 (0x10001)
-        X509v3 extensions:
-            X509v3 Basic Constraints: 
-                CA:FALSE
-            Netscape Cert Type: 
-                SSL Server
-            Netscape Comment: 
-                Easy-RSA Generated Server Certificate
-            X509v3 Subject Key Identifier: 
-                28:1D:A2:5E:3A:50:2C:3A:E0:B0:54:57:D6:11:02:FC:D6:1F:FF:35
-            X509v3 Authority Key Identifier: 
-                keyid:DB:6B:D9:7E:CC:36:11:1E:67:E8:45:B0:07:26:88:17:F6:8B:F3:AB
-                DirName:/C=PH/ST=MA/L=Antipolo City/O=TKNetwork/OU=TKNerwork/CN=TKNetwork CA/name=TKNetwork/emailAddress=ericlaylay@gmail.com
-                serial:52:67:60:3D:A2:29:17:35:5F:CA:B9:4A:8E:E2:80:74:F3:CE:64:EB
-
-            X509v3 Extended Key Usage: 
-                TLS Web Server Authentication
-            X509v3 Key Usage: 
-                Digital Signature, Key Encipherment
-            X509v3 Subject Alternative Name: 
-                DNS:[server]
-    Signature Algorithm: sha256WithRSAEncryption
-         0c:5a:d1:93:48:73:de:35:f0:1b:b5:88:71:be:ce:04:e0:f7:
-         c3:b1:ef:48:05:2f:20:ff:68:6c:e6:10:0f:d2:65:6b:57:e4:
-         cc:36:af:4c:ec:d4:0c:46:4c:76:5a:7d:20:74:92:67:41:5f:
-         74:27:3b:48:39:51:65:ff:86:3b:1b:6a:15:b1:11:99:45:cd:
-         03:0e:e2:46:5d:c0:19:e0:07:0c:18:1e:6e:a1:f6:f2:32:b5:
-         3d:91:27:0a:e8:ae:e5:22:a0:f1:87:9f:b8:ba:d8:eb:6b:2b:
-         82:8d:e4:2e:66:0a:2a:1f:f6:bb:ee:6a:92:8f:c7:77:0d:ee:
-         68:96:58:ce:52:c5:6a:c5:7a:24:fd:ee:83:ba:0b:4e:28:b6:
-         92:60:f1:ce:24:bc:9e:a5:ca:73:d3:cc:69:48:a4:8b:31:c3:
-         7f:41:d1:31:2d:1e:e8:c7:4f:5d:d6:c1:e8:8d:b7:44:49:0a:
-         5a:6c:ea:44:a3:70:19:12:2d:a9:d1:90:bd:3a:3d:4b:85:c0:
-         35:d0:03:94:1f:de:68:1c:a0:5d:f0:b9:6c:40:68:97:1a:25:
-         c1:5a:a0:cc:a9:51:68:d5:37:be:74:e4:23:0a:fd:74:92:54:
-         9e:2f:fc:65:56:d1:27:3b:05:01:b4:c1:b4:a9:10:8d:70:30:
-         a0:b6:74:55
------BEGIN CERTIFICATE-----
-MIIFazCCBFOgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBqjELMAkGA1UEBhMCUEgx
-CzAJBgNVBAgTAk1BMRYwFAYDVQQHEw1BbnRpcG9sbyBDaXR5MRIwEAYDVQQKEwlU
-S05ldHdvcmsxEjAQBgNVBAsTCVRLTmVyd29yazEVMBMGA1UEAxMMVEtOZXR3b3Jr
-IENBMRIwEAYDVQQpEwlUS05ldHdvcmsxIzAhBgkqhkiG9w0BCQEWFGVyaWNsYXls
-YXlAZ21haWwuY29tMB4XDTIyMDkyMDAzNTQwOFoXDTMyMDkxNzAzNTQwOFowgacx
-CzAJBgNVBAYTAlBIMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNQW50aXBvbG8gQ2l0
-eTESMBAGA1UEChMJVEtOZXR3b3JrMRIwEAYDVQQLEwlUS05lcndvcmsxEjAQBgNV
-BAMTCVRLTmV0d29yazESMBAGA1UEKRMJVEtOZXR3b3JrMSMwIQYJKoZIhvcNAQkB
-FhRlcmljbGF5bGF5QGdtYWlsLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
-AQoCggEBALXrod5FOVSpEtuRsGisdzl+Te5crmwvV6dwphk5GbBGdW1QgZ08Q1oh
-SYSx+mhnLgW67OEIO3AHdzIDGWV8r9UQl4o6rxFm7kKykLUaNChVdg+jrPPpHfzX
-X3yJUDt+D0lhl7d5tcYpKsXj7zhDdxLLBtDhLEo4/goz7Cy3eb+5+tfqLJ8CTxDr
-Cm8FWlAB3FCTcQO5YzRTnjCdI2Rm6JxzGYU5tnm0VR2dKuDfTLJawukOWaI6cDRq
-nIoJNB1eKam2WxbOnsVsUNZNEAlg9skAgSnjoUwQ+/6lFNa1KuByUC9Q3Lw0jcri
-+3gGTbXN/prNKrfJeTJmSr/T0AQlntUCAwEAAaOCAZswggGXMAkGA1UdEwQCMAAw
-EQYJYIZIAYb4QgEBBAQDAgZAMDQGCWCGSAGG+EIBDQQnFiVFYXN5LVJTQSBHZW5l
-cmF0ZWQgU2VydmVyIENlcnRpZmljYXRlMB0GA1UdDgQWBBQoHaJeOlAsOuCwVFfW
-EQL81h//NTCB6gYDVR0jBIHiMIHfgBTba9l+zDYRHmfoRbAHJogX9ovzq6GBsKSB
-rTCBqjELMAkGA1UEBhMCUEgxCzAJBgNVBAgTAk1BMRYwFAYDVQQHEw1BbnRpcG9s
-byBDaXR5MRIwEAYDVQQKEwlUS05ldHdvcmsxEjAQBgNVBAsTCVRLTmVyd29yazEV
-MBMGA1UEAxMMVEtOZXR3b3JrIENBMRIwEAYDVQQpEwlUS05ldHdvcmsxIzAhBgkq
-hkiG9w0BCQEWFGVyaWNsYXlsYXlAZ21haWwuY29tghRSZ2A9oikXNV/KuUqO4oB0
-885k6zATBgNVHSUEDDAKBggrBgEFBQcDATALBgNVHQ8EBAMCBaAwEwYDVR0RBAww
-CoIIW3NlcnZlcl0wDQYJKoZIhvcNAQELBQADggEBAAxa0ZNIc9418Bu1iHG+zgTg
-98Ox70gFLyD/aGzmEA/SZWtX5Mw2r0zs1AxGTHZafSB0kmdBX3QnO0g5UWX/hjsb
-ahWxEZlFzQMO4kZdwBngBwwYHm6h9vIytT2RJwroruUioPGHn7i62OtrK4KN5C5m
-Ciof9rvuapKPx3cN7miWWM5SxWrFeiT97oO6C04otpJg8c4kvJ6lynPTzGlIpIsx
-w39B0TEtHujHT13WweiNt0RJClps6kSjcBkSLanRkL06PUuFwDXQA5Qf3mgcoF3w
-uWxAaJcaJcFaoMypUWjVN7505CMK/XSSVJ4v/GVW0Sc7BQG0wbSpEI1wMKC2dFU=
------END CERTIFICATE-----
-EOF
-
-cat << EOF > /etc/hysteria/server.key
------BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC166HeRTlUqRLb
-kbBorHc5fk3uXK5sL1encKYZORmwRnVtUIGdPENaIUmEsfpoZy4FuuzhCDtwB3cy
-AxllfK/VEJeKOq8RZu5CspC1GjQoVXYPo6zz6R381198iVA7fg9JYZe3ebXGKSrF
-4+84Q3cSywbQ4SxKOP4KM+wst3m/ufrX6iyfAk8Q6wpvBVpQAdxQk3EDuWM0U54w
-nSNkZuiccxmFObZ5tFUdnSrg30yyWsLpDlmiOnA0apyKCTQdXimptlsWzp7FbFDW
-TRAJYPbJAIEp46FMEPv+pRTWtSrgclAvUNy8NI3K4vt4Bk21zf6azSq3yXkyZkq/
-09AEJZ7VAgMBAAECggEBALI+EPcKtEVy8vsXH9UvRhGa4xhszqlJKYTxJo0IGVdR
-cbSNcLFyXjts6e+Nwl+Q2NLcd0N1IWd+qRbjWnrJVC5ad2AEZ4uRYlkPRCFtbzUl
-putj3w2Mlsko7HHEyEvCE5A+grxOD//8TeBemAB0ebJ8Ik1+kjqW5LFydjDKBAwI
-sYjXpYGkMST9rqG82EToQn9jL5Ncby35Ls3owzWDfd/1Y4NQmk6gO09spoMzWJpS
-mSiV+w83QxxJtOgT00O9NuDz9skotW3v2xWTZue0BzMirCTQWPiFRL1476/O9KYD
-KUBAcWynC/PE4ub0lMfaesdrggjRoDYvaQp3xLx/6HECgYEA4siN9t7Ogwhf/4X7
-BAN+2OSRWRW8tn9wzzNAPzhjs8igm4W+C4lQtMmW9eFOHuRj6TiWp4w36m4cs5VF
-eK39mp3/nyd9l68bFjGxw3XZsI/5bTGgcrSVAAAGp65xadI3+1Ozy7OmFoRF/Gkv
-X7+/DyWz5nb9yAH/N69vPpVek8sCgYEAzVt4qpMc5tX6tMxCAC1ZUFo8fwSZndmk
-jDTgb2G2O1YIqrYHqVjtwMQiDxvBGdkVJuy8QQQHM6YCD3o1Jq56bjvY1IlumXCW
-0YeKfSeqfXN/nBCkyZxa79DkQSPeYEjFTFABVe/SEEcasn8HrlyygtFT+nLCcEz/
-V1ekP5Mmg98CgYEApsGOEh9XfuZjoIKmRxdC6L15WyYus4sWKmWnMlWGiqZV4sX/
-LoB0BdvN01MunGyYQt/Hd8AVRZ5eIHb8tHZL6quPUTo6kZTCuBkme3Fm9vuHDxHU
-x0Od5HggbKBK6OMZIwczR+/7iscMp0O5ABEArmSs2iRZC/7b6dhoVn6DIu0CgYA+
-tOvHylxM8JI5mxWcUDyxmJxYfOMbnFXuqkbOPBwVSlQjLKpyP8F512o/Cs6QQgV/
-eVKS19QLJWoDp+GLCkRAXO39GGo5WHP1T1oulWouHJKe6UYoeiIakMLiUT2aUR5O
-CzAdObn/VncEgl2qFIw9/gWSuHA/MoPV++EfuKNOKQKBgDbyYfG3JESaLpaEiPED
-UQDv4iVBzaqA3sMpmpA2YRIUZE4ZzSuiVMxGHfhAvueuiMwyzqsLe0BOgCNtJDg3
-o4CmMhs3Wlw5FiOru1LxQY//65wi5q8+rNF4DR3oUKoVGb1PD3Gm8ZsxirhMOCrc
-sKKWTJk08giHse+yqTKQ05uR
------END PRIVATE KEY-----
-EOF
-
-chmod 755 /etc/hysteria/config.json
-chmod 755 /etc/hysteria/server.crt
-chmod 755 /etc/hysteria/server.key
-
-
-}
-
-installBBR() {
-    echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
-    echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
-    sysctl -p
-    
-    apt install -y linux-generic-hwe-20.04
-    grub-set-default 0
-    echo "tcp_bbr" >> /etc/modules-load.d/modules.conf
-    INSTALL_BBR=true
-}
 
 install_rclocal(){
   {
-  sed -i 's/Listen 80/Listen 81/g' /etc/apache2/ports.conf
-    systemctl restart apache2
+sed -i 's/Listen 80/Listen 81/g' /etc/httpd/conf/httpd.conf
+systemctl restart httpd
+
     
-    sudo systemctl restart stunnel4
-    sudo systemctl enable openvpn@server.service
-    sudo systemctl start openvpn@server.service
-    sudo systemctl enable openvpn@server2.service
-    sudo systemctl start openvpn@server2.service    
+sudo systemctl restart stunnel
+sudo systemctl enable openvpn-server@server.service
+sudo systemctl start openvpn-server@server.service
+sudo systemctl enable openvpn-server@server2.service
+sudo systemctl start openvpn-server@server2.service
+ 
     
     echo "[Unit]
 Description=pandavpnunite service
@@ -979,7 +921,7 @@ service ufw stop
 iptables-restore < /etc/iptables_rules.v4
 ip6tables-restore < /etc/iptables_rules.v6
 sysctl -p
-service stunnel4 restart
+service stunnel restart
 systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service
 screen -dmS socks python /etc/socks.py 80
@@ -992,7 +934,7 @@ exit 0' >> /etc/rc.local
     sudo systemctl enable pandavpnunite
     sudo systemctl start pandavpnunite.service
     
-    mkdir -m 777 /root/.web
+    mkdir -p -m 777 /root/.web
 echo "Installation success: Pandavpnunite... " > /root/.web/index.php
 
 ( set -o posix ; set ) | grep PORT > /root/.ports
@@ -1001,156 +943,11 @@ sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2
   }&>/dev/null
 }
 
-install_v2ray(){
-curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
-sudo bash install-release.sh
-
-sudo systemctl enable v2ray
-sudo systemctl restart v2ray
-
-wget -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
-chmod +x /etc/authorization/pandavpnunite/v2ray.sh
-
-cat << EOF > /usr/local/etc/v2ray/default-config.json
-{
-  "log": {
-    "loglevel": "warning",
-    "access": "/var/log/v2ray/access.log",
-    "error": "/var/log/v2ray/error.log"
-  },
-  "inbounds": [
-    {
-      "port": 10000,
-      "listen":"127.0.0.1",
-      "protocol": "vmess",
-      "settings": {
-        "clients": []
-      },
-      "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-        "path": "/ray"
-        }
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "protocol": "freedom",
-      "settings": {}
-    }
-  ]
-}
-EOF
-
-cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
-/usr/bin/php /etc/authorization/pandavpnunite/connection.php
-/bin/bash /etc/authorization/pandavpnunite/v2ray.sh
-
-sudo systemctl restart v2ray
-
-sudo apt install -y nginx
-
-#-- add v2ray config default
-rm -rf /etc/nginx/conf.d/v2ray.conf
-wget -O /etc/nginx/conf.d/v2ray.conf "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-v2ray.sh" 
-
-#--- add default 
-rm -rf /etc/nginx/sites-available/default
-wget -O /etc/nginx/sites-available/default "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-default.sh" 
-
-sudo nginx -t
-sudo systemctl enable nginx
-sudo systemctl reload nginx
-sudo systemctl restart nginx
-
-
-}
-
-server_authentication(){
-mkdir -p /etc/authorization/pandavpnunite/log
-wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
-
-#--- execute asap
-/usr/bin/php /etc/authorization/pandavpnunite/connection.php
-/bin/bash /etc/authorization/pandavpnunite/active.sh
-
-}   
-
-start_service () {
-echo 'Starting..'
-{
-sudo crontab -l | { echo "
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
-* * * * * pgrep -x stunnel4 >/dev/null && echo 'GOOD' || /etc/init.d/stunnel4 restart
-* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php >/etc/authorization/pandavpnunite/log/connection.log 2>&1
-* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
-* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
-* * * * * /bin/bash /root/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
-0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
-# * * * * * /bin/bash /etc/hysteria/online.sh >/etc/authorization/pandavpnunite/log/hysteria_online.log 2>&1
-# * * * * * /bin/bash /etc/hysteria/ws.sh >/etc/authorization/pandavpnunite/log/hysteria_ws.log 2>&1
-# * * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/etc/authorization/pandavpnunite/log/hysteria_monitor.log 2>&1
-0 * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
-"; 
-} | crontab -
-
-sudo systemctl restart cron
-} &>/dev/null
-clear
-service dropbear restart
-service stunnel4 restart
-service squid restart 
-systemctl enable hysteria-server.service
-systemctl restart hysteria-server.service
-systemctl restart openvpn@server.service
-systemctl restart openvpn@server2.service  
-systemctl restart v2ray
-killall screen 
-screen -dmS socks python /etc/socks.py 80
-screen -dmS websocket python /usr/local/sbin/websocket.py 8081
-screen -dmS proxy python /usr/local/sbin/proxy.py 8010
-screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $(cat /root/ns.txt) 127.0.0.1:2222
-screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
-
-cat /root/.ports
-screen -list
-
-rm -f /etc/.systemlink
-echo 'DNS=1.1.1.1
-DNSStubListener=no' >> /etc/resolv.conf
-sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
-
-history -c;
-
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo '#############################################
-#         Authentication file system        #
-#       Setup by: Pandavpn Unite            #
-#       Server System: Panda VPN 	        #
-#            owner: Pandavpnunite      	    #
-#############################################'
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-netstat -tupln
-}
-
- 
 
 install_require
-install_dropbear
 install_hysteria
 setup_ssl
 install_squid
 install_openvpn
 install_firewall_kvm
 install_stunnel
-install_rclocal
-install_websocket_and_socks
-install_dnstt
-server_authentication
-install_v2ray
-execute_to_screen
-start_service
