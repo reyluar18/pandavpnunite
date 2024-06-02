@@ -970,6 +970,8 @@ sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2
 }
 
 install_v2ray(){
+echo "Installing V2RAY"
+{
 curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
 sudo bash install-release.sh
 
@@ -1031,18 +1033,19 @@ sudo nginx -t
 sudo systemctl enable nginx
 sudo systemctl reload nginx
 sudo systemctl restart nginx
-
-
+}&>/dev/null
 }
 
 server_authentication(){
+echo "Connecting authentication to panel"
+{
 mkdir -p /etc/authorization/pandavpnunite/log
 wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
 
 #--- execute asap
 /usr/bin/php /etc/authorization/pandavpnunite/connection.php
 /bin/bash /etc/authorization/pandavpnunite/active.sh
-
+}&>/dev/null
 }   
 
 start_service () {
