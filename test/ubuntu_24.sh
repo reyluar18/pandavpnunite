@@ -6,7 +6,7 @@ clear
 echo "Installing Services..." 
 {   
 cd ~
-wget -O panda_aio.sh https://raw.githubusercontent.com/reyluar03/pandaunite/main/panda_aio.sh
+wget -O panda_aio.sh https://raw.githubusercontent.com/reyluar03/pandaunite/main/panda_aio_24.sh
 
 }&>/dev/null
 
@@ -40,7 +40,7 @@ systemctl restart hysteria-server.service
 echo "Completed"
 }
 
-rm -rf all_in_one.sh*
+rm -rf ubuntu_24.sh*
 
 install_services
 update_auth

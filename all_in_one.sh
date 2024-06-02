@@ -780,6 +780,7 @@ user_name=`mysql -u $USER -p$PASS -D $DB -h $HOST -sN -e "$Query"`
 [ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ] && echo "user : $username" && echo 'authentication ok.' && exit 0 || echo 'authentication failed.'; exit 1
 EOM
 
+chmod +x /etc/hysteria/.auth.sh
 sed -i "s|PORT_HYSTERIA|$PORT_HYSTERIA|g" /etc/hysteria/config.json
 chmod 755 /etc/hysteria/config.json
 touch /etc/hysteria/logs
