@@ -22,7 +22,7 @@ if ! diff -q /etc/authorization/pandavpnunite/active.sh /etc/authorization/panda
     #echo $client_array
     cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
     sed -i "s/\"clients\": \[\]/\"clients\": $client_array/" /usr/local/etc/v2ray/config.json
-    cp active.sh prev_active.sh
+    cp /etc/authorization/pandavpnunite/active.sh /etc/authorization/pandavpnunite/prev_active.sh
     sudo systemctl restart v2ray
 
 fi
