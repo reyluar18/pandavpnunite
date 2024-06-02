@@ -45,17 +45,18 @@ echo '#############################################
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 read -p "Please enter ns host for Slowdns: " NS
 # NS="ns-sg.kathropavpn.store"
+echo $NS > /root/ns.txt
 
 install_require () {
 
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y curl wget cron python2 libpython2-stdlib curl unzip
+apt install -y curl wget cron python-is-python3 curl unzip
 apt install -y iptables
-apt install -y openvpn netcat httpie php neofetch vnstat php-mysql
-apt install -y screen squid stunnel4 dropbear gnutls-bin python
+apt install -y openvpn netcat-traditional httpie php neofetch vnstat php-mysql
+apt install -y screen squid stunnel4 dropbear gnutls-bin
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
-apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
+apt install -y plocate dh-make libaudit-dev build-essential fail2ban
 mkdir -p /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 apt-get install lsof git iptables-persistent -y
@@ -86,6 +87,7 @@ rm -f /etc/motd
 touch /etc/motd.tail
 
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
+sed -i "s|#DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_DROPBEAR|g" /etc/default/dropbear
 sed -i "s|DROPBEAR_PORT=22|DROPBEAR_PORT=$PORT_DROPBEAR|g" /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
@@ -96,11 +98,11 @@ service dropbear restart
 install_websocket_and_socks(){
 echo "Installing websocket and socks"
 {
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket.py -O /usr/local/sbin/websocket.py
+    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket_3.py -O /usr/local/sbin/websocket.py
     dos2unix /usr/local/sbin/websocket.py
     chmod +x /usr/local/sbin/websocket.py
 
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy.py -O /usr/local/sbin/proxy.py
+    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy_3.py -O /usr/local/sbin/proxy.py
     dos2unix /usr/local/sbin/proxy.py
     chmod +x /usr/local/sbin/proxy.py
 }&>/dev/null
@@ -185,42 +187,9 @@ install_squid(){
 clear
 echo 'Installing proxy.'
 {
-sudo cp /etc/apt/sources.list /etc/apt/sources.list_backup
-echo "deb http://deb.debian.org/debian bullseye main contrib non-free
-deb-src http://deb.debian.org/debian bullseye main contrib non-free
-deb http://deb.debian.org/debian bullseye-updates main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
-deb http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb http://security.debian.org/debian-security/ bullseye-security main contrib non-free
-deb-src http://security.debian.org/debian-security/ bullseye-security main contrib non-free" >> /etc/apt/sources.list
-    apt update
-    apt install -y gcc-4.9 g++-4.9
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 10
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 10
-    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30
-    update-alternatives --set cc /usr/bin/gcc
-    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
-    update-alternatives --set c++ /usr/bin/g++
-    cd /usr/src
-    wget https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid-3.1.23.tar.gz
-    tar zxvf squid-3.1.23.tar.gz
-    cd squid-3.1.23
-    ./configure --prefix=/usr \
-      --localstatedir=/var/squid \
-      --libexecdir=/usr/lib/squid \
-      --srcdir=. \
-      --datadir=/usr/share/squid \
-      --sysconfdir=/etc/squid \
-      --with-default-user=proxy \
-      --with-logdir=/var/log/squid \
-      --with-pidfile=/var/run/squid.pid
-    make -j$(nproc)
-    make install
-    wget --no-check-certificate -O /etc/init.d/squid https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/squid.sh
-    chmod +x /etc/init.d/squid
     update-rc.d squid defaults
     chown -cR proxy /var/log/squid
+    service squid stop
     squid -z
     cd /etc/squid/
     rm squid.conf
@@ -250,7 +219,7 @@ error_directory /usr/share/squid/errors/English' >> squid.conf
     chmod 755 *
     /etc/init.d/squid start
 cd /etc || exit
-wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks.py' -O /etc/socks.py
+wget 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks_3.py' -O /etc/socks.py
 dos2unix /etc/socks.py
 chmod +x /etc/socks.py
 rm /etc/apt/sources.list
@@ -282,7 +251,6 @@ ca /etc/openvpn/easy-rsa/keys/ca.crt
 cert /etc/openvpn/easy-rsa/keys/server.crt
 key /etc/openvpn/easy-rsa/keys/server.key
 dh /etc/openvpn/easy-rsa/keys/dh.pem
-ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
@@ -326,7 +294,6 @@ ca /etc/openvpn/easy-rsa/keys/ca.crt
 cert /etc/openvpn/easy-rsa/keys/server.crt
 key /etc/openvpn/easy-rsa/keys/server.key
 dh /etc/openvpn/easy-rsa/keys/dh.pem
-ncp-disable
 tls-server
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
@@ -991,7 +958,7 @@ exit 0' >> /etc/rc.local
     sudo systemctl enable pandavpnunite
     sudo systemctl start pandavpnunite.service
     
-    mkdir -m 777 /root/.web
+    mkdir -p -m 777 /root/.web
 echo "Installation success: Pandavpnunite... " > /root/.web/index.php
 
 ( set -o posix ; set ) | grep PORT > /root/.ports

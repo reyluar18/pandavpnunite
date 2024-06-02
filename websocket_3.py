@@ -146,7 +146,7 @@ class ConnectionHandler(threading.Thread):
                 self.client.send(b'HTTP/1.1 400 NoXRealHost!\r\n\r\n')
 
         except Exception as e:
-            self.log += ' - error: ' + str(e)
+            self.log += ' - error:' + str(e)
             self.server.printLog(self.log)
             pass
         finally:
@@ -154,6 +154,7 @@ class ConnectionHandler(threading.Thread):
             self.server.removeConn(self)
 
     def findHeader(self, head, header):
+        header = header.encode()  # Convert the string to bytes
         aux = head.find(header + b': ')
 
         if aux == -1:
@@ -169,7 +170,7 @@ class ConnectionHandler(threading.Thread):
         return head[:aux]
 
     def connect_target(self, host):
-        i = host.find(b':')
+        i = host.find(':')
         if i != -1:
             port = int(host[i+1:])
             host = host[:i]

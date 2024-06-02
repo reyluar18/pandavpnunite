@@ -1,7 +1,6 @@
 #!/bin/bash
 . /etc/hysteria/config.sh
-serverip=159.223.43.176
-
+serverip=$(curl -s https://api.ipify.org)
 
 tcpusers=$(sed -n -e "/^ROUTING_TABLE/p" /etc/openvpn/server/tcpclient.log | wc -l)
 udpusers=$(sed -n -e "/^ROUTING_TABLE/p" /etc/openvpn/server/udpclient.log | wc -l)
