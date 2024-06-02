@@ -7,6 +7,7 @@ PASS='pandavpn_unity'
 DBNAME='daddyjoh_pandavpn_unity'
 
 rm -rf all_in_one.sh*
+rm -rf ubuntu_24_aio.sh*
 
 #PORT SQUID
 PORT_SQUID_1='3128'
