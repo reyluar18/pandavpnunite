@@ -31,6 +31,10 @@ PORT_DROPBEAR='442'
 PORT_HYSTERIA='5666'
 PORT_DNSTT='5300'
 
+#CF
+CF_TOKEN='dsadsa'
+# CF_DOMAIN_NAME='test.com'
+
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
 server_interface=$(ip route get 8.8.8.8 | awk '/dev/ {f=NR} f&&NR-1==f' RS=" ")
@@ -43,15 +47,43 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-read -p "Please enter ns host for Slowdns: " NS
+read -p "Please enter your Cloudflare Domain Name: " CF_DOMAIN_NAME
 # NS="ns-sg.kathropavpn.store"
+
+
+register_sub_domain()
+{
+echo "Processing DNS"
+{
+NS_VAL=$(pwgen 5 1)
+SUB_DOMAIN_VAL=$(pwgen 5 1)
+
+if [[ "$NS_VAL" == "$SUB_DOMAIN_VAL" ]];then
+	SUB_DOMAIN_VAL=${pwgen 5 1}
+fi
+
+NS="${NS_VAL}.${CF_DOMAIN_NAME}"
+SUB_DOMAIN="${SUB_DOMAIN_VAL}.${CF_DOMAIN_NAME}"
+echo $NS >/root/ns.txt
+echo $SUB_DOMAIN > /root/sub_domain.txt 
+
+mkdir -p /etc/authorization/cf
+
+wget -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry.py"
+chmod +x /etc/authorization/cf/cf_dns_registry.py
+
+python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --subdomain $SUB_DOMAIN_VAL --type A --content $server_ip
+python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --subdomain $NS_VAL --type NS --content $SUB_DOMAIN
+
+}&>/dev/null
+}
 
 install_require () {
 
 export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y curl wget cron python2 libpython2-stdlib curl unzip
-apt install -y iptables
+apt install -y iptables pwgen
 apt install -y openvpn netcat httpie php neofetch vnstat php-mysql
 apt install -y screen squid stunnel4 dropbear gnutls-bin python
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
@@ -1141,7 +1173,6 @@ echo -e " \033[0;35m════════════════════
 netstat -tupln
 }
 
- 
 
 install_require
 install_dropbear
@@ -1153,6 +1184,7 @@ install_firewall_kvm
 install_stunnel
 install_rclocal
 install_websocket_and_socks
+# register_sub_domain
 install_dnstt
 server_authentication
 install_v2ray
