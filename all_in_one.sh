@@ -1048,9 +1048,8 @@ EOF
 
 cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
 /usr/bin/php /etc/authorization/pandavpnunite/connection.php
+echo "initial_run" > /etc/authorization/pandavpnunite/prev_active.sh
 /bin/bash /etc/authorization/pandavpnunite/v2ray.sh
-
-sudo systemctl restart v2ray
 
 sudo apt install -y nginx
 
