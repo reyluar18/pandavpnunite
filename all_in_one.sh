@@ -29,7 +29,9 @@ PORT_SSH_SSL='445'
 #OTHERS
 PORT_DROPBEAR='442'
 PORT_HYSTERIA='5666'
-PORT_DNSTT='5300'
+PORT_DNSTT_SERVER='5300'
+PORT_DNSTT_SSH_CLIENT='2222'
+PORT_V2RAY='10000'
 
 #CF
 CF_TOKEN='dsadsa'
@@ -47,7 +49,9 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-read -p "Please enter your Cloudflare Domain Name: " CF_DOMAIN_NAME
+read -p "Please enter ns host for Slowdns: " NS
+echo $NS > /root/ns.txt
+# read -p "Please enter your Cloudflare Domain Name: " CF_DOMAIN_NAME
 # NS="ns-sg.kathropavpn.store"
 
 
@@ -168,19 +172,19 @@ EOM
 echo $NS > /root/ns.txt
 NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns-server ./dnstt-server -udp :$PORT_DNSTT -privkey-file server.key $NSNAME 127.0.0.1:22
+screen -dmS slowdns-server ./dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file server.key $NSNAME 127.0.0.1:22
 
 cd /root/dnstt/dnstt-client
 go build
 cp /root/dnstt/dnstt-server/server.pub /root/dnstt/dnstt-client/server.pub
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:$PORT_DNSTT_SSH_CLIENT
 
 cat <<EOM > /bin/dnsttauto.sh
-sudo kill $( sudo lsof -i:$PORT_DNSTT -t )
+sudo kill $( sudo lsof -i:$PORT_DNSTT_SERVER -t )
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:$PORT_DNSTT_SSH_CLIENT
 
 EOM
 }&>/dev/null
@@ -1029,7 +1033,7 @@ exit 0' >> /etc/rc.local
 echo "Installation success: Pandavpnunite... " > /root/.web/index.php
 
 ( set -o posix ; set ) | grep PORT > /root/.ports
-sed -i "s|$PORT_DNSTT|$PORT_DNSTT > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 > NAMESERVER = $(cat /root/ns.txt)|g" /root/.ports
+sed -i "s|$PORT_DNSTT_SERVER|$PORT_DNSTT_SERVER > SLOWCHAVE KEY = 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032 > NAMESERVER = $(cat /root/ns.txt)|g" /root/.ports
 
   }&>/dev/null
 }
@@ -1055,7 +1059,7 @@ cat << EOF > /usr/local/etc/v2ray/default-config.json
   },
   "inbounds": [
     {
-      "port": 10000,
+      "port": $PORT_V2RAY,
       "listen":"127.0.0.1",
       "protocol": "vmess",
       "settings": {
@@ -1148,8 +1152,8 @@ screen -dmS socks python /etc/socks.py 80
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
-screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $(cat /root/ns.txt) 127.0.0.1:2222
+screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $(cat /root/ns.txt) 127.0.0.1:$PORT_DNSTT_SSH_CLIENT
 screen -dmS webinfo php -S 0.0.0.0:5623 -t /root/.web/
 
 cat /root/.ports
