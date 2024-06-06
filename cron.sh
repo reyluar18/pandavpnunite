@@ -3,12 +3,21 @@ error_reporting(E_ERROR | E_PARSE);
 ini_set('display_errors', '1');
 //include('config.php');
 
+$variables = file('/etc/openvpn/login/config.sh', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
+foreach ($variables as $config){
+  list($key, $value) = explode('=', $config, 2);
+  if ($value != null){
+    $key = trim($key);
+    $value = trim($value);
+    $$key = $value;
+  }
+}
 
-$DB_host = '185.61.137.171';
-$DB_user = 'daddyjoh_pandavpn_unity';
-$DB_pass = 'pandavpn_unity';
-$DB_name = 'daddyjoh_pandavpn_unity';
+$DB_host = $HOST;
+$DB_user = $USER;
+$DB_pass = $PASS;
+$DB_name = $DB;
 
 $mysqli = new MySQLi($DB_host,$DB_user,$DB_pass,$DB_name);
 if ($mysqli->connect_error) {
