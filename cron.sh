@@ -10,7 +10,7 @@ foreach ($variables as $config){
   if ($value != null){
     $key = trim($key);
     $value = trim($value);
-    $$key = $value;
+    $$key = strval(str_replace("'", "", $value));
   }
 }
 
@@ -18,6 +18,7 @@ $DB_host = $HOST;
 $DB_user = $USER;
 $DB_pass = $PASS;
 $DB_name = $DB;
+
 
 $mysqli = new MySQLi($DB_host,$DB_user,$DB_pass,$DB_name);
 if ($mysqli->connect_error) {
@@ -147,4 +148,4 @@ fclose($fp);
 
 $mysqli->close();
 ?>
-Working Password Decrypted
+Execution Completed! Success without any error
