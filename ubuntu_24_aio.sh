@@ -15,8 +15,9 @@ PORT_SQUID_2='8080'
 PORT_SQUID_3='8181'
 
 #PYTHON PROXY 
-PORT_SOCKS='80'
-PORT_WEBSOCKET='8081'
+PORT_SOCKS='8081'
+PORT_WEBSOCKET='90'
+PORT_SOCKOVPN='80'
 PORT_PYPROXY='8010'
 
 #PORT OPENVPN
@@ -137,6 +138,10 @@ echo "Installing websocket and socks"
     dos2unix /usr/local/sbin/websocket.py
     chmod +x /usr/local/sbin/websocket.py
 
+    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socksovpn_3.py -O /usr/local/sbin/socksovpn.py
+    dos2unix /usr/local/sbin/socksovpn.py
+    chmod +x /usr/local/sbin/socksovpn.py
+
     wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy_3.py -O /usr/local/sbin/proxy.py
     dos2unix /usr/local/sbin/proxy.py
     chmod +x /usr/local/sbin/proxy.py
@@ -205,6 +210,13 @@ else
     screen -dmS websocket python /usr/local/sbin/websocket.py PORT_WEBSOCKET
 fi
 
+if nc -z localhost PORT_SOCKOVPN; then
+    echo "WebSocket OVPN is running"
+else
+    echo "Starting WebSocket OVPN"
+    screen -dmS socksovpn python /usr/local/sbin/socksovpn.py PORT_SOCKOVPN
+fi
+
 if nc -z localhost PORT_PYPROXY; then
     echo "Python Proxy Running"
 else
@@ -214,6 +226,8 @@ fi
 EOM
 sed -i "s|PORT_WEBSOCKET|$PORT_WEBSOCKET|g" /root/auto
 sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /root/auto
+sed -i "s|PORT_SOCKOVPN|$PORT_SOCKOVPN|g" /root/auto
+
 
 bash /root/auto
 }
@@ -1114,8 +1128,9 @@ systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service  
 systemctl restart v2ray
 killall screen 
-screen -dmS socks python /etc/socks.py 80
-screen -dmS websocket python /usr/local/sbin/websocket.py 8081
+screen -dmS socks python /etc/socks.py 8081
+screen -dmS websocket python /usr/local/sbin/websocket.py 90
+screen -dmS socksovpn python /usr/local/sbin/socksovpn.py 80
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
 screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file ~/dnstt/dnstt-server/server.key $(cat /root/ns.txt) 127.0.0.1:22
