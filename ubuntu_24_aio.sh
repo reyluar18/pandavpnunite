@@ -1162,8 +1162,10 @@ echo '#############################################
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 netstat -tupln
-alias my_dns="cat /root/ns.txt"
-alias my_ports="cat /root/.ports"
+cd ~
+echo "alias my_dns='cat /root/ns.txt'" >> .bashrc
+echo "alias my_ports='cat /root/.ports'" >> .bashrc
+. .bashrc
 echo "
 Panda VPN Available command for execution: 
 
