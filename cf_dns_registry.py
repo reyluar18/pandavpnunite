@@ -1,10 +1,11 @@
-import requests
+import requestsimport requests
 import argparse
 
-def get_zone_id(token, domain_name):
+def get_zone_id(email, token, domain_name):
     url = "https://api.cloudflare.com/client/v4/zones"
     headers = {
-        "Authorization": f"Bearer {token}",
+        "X-Auth-Email": email,
+        "X-Auth-Key": token,
         "Content-Type": "application/json"
     }
     params = {"name": domain_name}
@@ -18,10 +19,11 @@ def get_zone_id(token, domain_name):
         print("Failed to get zone ID.")
         return None
 
-def register_dns(token, zone_id, subdomain, record_type, content):
+def register_dns(email, token, zone_id, subdomain, record_type, content):
     url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
     headers = {
-        "Authorization": f"Bearer {token}",
+        "X-Auth-Email": email,
+        "X-Auth-Key": token,
         "Content-Type": "application/json"
     }
     data = {
@@ -44,6 +46,7 @@ def register_dns(token, zone_id, subdomain, record_type, content):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
+    parser.add_argument("--email", help="Cloudflare account email", required=True)
     parser.add_argument("--token", help="Cloudflare API token", required=True)
     parser.add_argument("--name", help="Domain name", required=True)
     parser.add_argument("--subdomain", help="Subdomain to register", required=True)
@@ -51,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--content", help="Content of the DNS record (IP address or name)", required=True)
     args = parser.parse_args()
 
-    zone_id = get_zone_id(args.token, args.name)
+    zone_id = get_zone_id(args.email, args.token, args.name)
     if zone_id:
-        register_dns(args.token, zone_id, args.subdomain, args.type, args.content)
+        register_dns(args.email, args.token, zone_id, args.subdomain, args.type, args.content)
+￼Enter
