@@ -1172,7 +1172,7 @@ install_firewall_kvm
 install_stunnel
 install_rclocal
 install_websocket_and_socks
-register_sub_domain
+# register_sub_domain
 install_dnstt
 server_authentication
 install_v2ray
