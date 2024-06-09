@@ -1,25 +1,29 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+# SocksProxy Mod By: Panda VPN Unite
 import socket
 import threading
 import select
 import signal
 import sys
 import time
-import getopt
+from os import system
 
-# Listen
-LISTENING_ADDR = '0.0.0.0'
-if sys.argv[1:]:
-    LISTENING_PORT = sys.argv[1]
-else:
-    LISTENING_PORT = 80  
-# Pass
+system("clear")
+
+# Connection settings
+IP = '0.0.0.0'
+try:
+    PORT = int(sys.argv[1])
+except:
+    PORT = 8000
+
 PASS = ''
-
-# CONST
 BUFLEN = 4096 * 4
 TIMEOUT = 60
-DEFAULT_HOST = '127.0.0.1:1195'
-RESPONSE = 'HTTP/1.1 101 <font color="green">OVPN Via Socks By Panda VPN Unite</font>\r\n\r\nContent-Length: 104857600000\r\n\r\n'
+MSG = 'Socks Via OVPN, Powered by: Panda VPN Unite'
+DEFAULT_HOST = '0.0.0.0:442'
+RESPONSE = "HTTP/1.1 200 " + str(MSG) + "\r\n\r\n"
 
 class Server(threading.Thread):
     def __init__(self, host, port):
@@ -35,8 +39,7 @@ class Server(threading.Thread):
         self.soc = socket.socket(socket.AF_INET)
         self.soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.soc.settimeout(2)
-        intport = int(self.port)
-        self.soc.bind((self.host, intport))
+        self.soc.bind((self.host, self.port))
         self.soc.listen(0)
         self.running = True
 
@@ -95,7 +98,7 @@ class ConnectionHandler(threading.Thread):
         self.client = socClient
         self.client_buffer = ''
         self.server = server
-        self.log = 'Connection: ' + str(addr)
+        self.log = 'Conexao: ' + str(addr)
 
     def close(self):
         try:
@@ -132,12 +135,12 @@ class ConnectionHandler(threading.Thread):
 
             if hostPort != '':
                 passwd = self.findHeader(self.client_buffer, 'X-Pass')
-                
+
                 if len(PASS) != 0 and passwd == PASS:
                     self.method_CONNECT(hostPort)
                 elif len(PASS) != 0 and passwd != PASS:
                     self.client.send(b'HTTP/1.1 400 WrongPass!\r\n\r\n')
-                elif hostPort.startswith('127.0.0.1') or hostPort.startswith('localhost'):
+                if hostPort.startswith(IP):
                     self.method_CONNECT(hostPort)
                 else:
                     self.client.send(b'HTTP/1.1 403 Forbidden!\r\n\r\n')
@@ -146,7 +149,7 @@ class ConnectionHandler(threading.Thread):
                 self.client.send(b'HTTP/1.1 400 NoXRealHost!\r\n\r\n')
 
         except Exception as e:
-            self.log += ' - error:' + str(e)
+            self.log += ' - error: ' + str(e)
             self.server.printLog(self.log)
             pass
         finally:
@@ -155,6 +158,7 @@ class ConnectionHandler(threading.Thread):
 
     def findHeader(self, head, header):
         header = header.encode()  # Convert the string to bytes
+
         aux = head.find(header + b': ')
 
         if aux == -1:
@@ -175,10 +179,10 @@ class ConnectionHandler(threading.Thread):
             port = int(host[i+1:])
             host = host[:i]
         else:
-            if self.method=='CONNECT':
-                port = 442
+            if self.method == 'CONNECT':
+                port = 110
             else:
-                port = sys.argv[1]
+                port = 22
 
         (soc_family, soc_type, proto, _, address) = socket.getaddrinfo(host, port)[0]
 
@@ -187,12 +191,10 @@ class ConnectionHandler(threading.Thread):
         self.target.connect(address)
 
     def method_CONNECT(self, path):
-        self.log += ' - CONNECT ' + str(path)
-
+        self.log += ' - CONNECT ' + path
         self.connect_target(path)
         self.client.sendall(RESPONSE.encode())
-        self.client_buffer = b''
-
+        self.client_buffer = ''
         self.server.printLog(self.log)
         self.doCONNECT()
 
@@ -225,48 +227,26 @@ class ConnectionHandler(threading.Thread):
                         break
             if count == TIMEOUT:
                 error = True
+
             if error:
                 break
 
 
-def print_usage():
-    print('Usage: proxy.py -p <port>')
-    print('       proxy.py -b <bindAddr> -p <port>')
-    print('       proxy.py -b 0.0.0.0 -p 80')
-
-def parse_args(argv):
-    global LISTENING_ADDR
-    global LISTENING_PORT
-    
-    try:
-        opts, args = getopt.getopt(argv,"hb:p:",["bind=","port="])
-    except getopt.GetoptError:
-        print_usage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print_usage()
-            sys.exit()
-        elif opt in ("-b", "--bind"):
-            LISTENING_ADDR = arg
-        elif opt in ("-p", "--port"):
-            LISTENING_PORT = int(arg)
-
-
-def main(host=LISTENING_ADDR, port=LISTENING_PORT):
-    print("\n:-------PythonProxy-------:\n")
-    print("Listening addr: " + LISTENING_ADDR)
-    print("Listening port: " + str(LISTENING_PORT) + "\n")
-    print(":-------------------------:\n")
-    server = Server(LISTENING_ADDR, LISTENING_PORT)
+def main(host=IP, port=PORT):
+    print("\033[0;34mâ”"*8,"\033[1;32m PROXY SOCKS","\033[0;34mâ”"*8,"\n")
+    print("\033[1;33mIP:\033[1;32m " + IP)
+    print("\033[1;33mPORTA:\033[1;32m " + str(PORT) + "\n")
+    print("\033[0;34mâ”"*10,"\033[1;32m Panda VPN Unite","\033[0;34mâ”\033[1;37m"*11,"\n")
+    server = Server(IP, PORT)
     server.start()
     while True:
         try:
             time.sleep(2)
         except KeyboardInterrupt:
-            print('Stopping...')
+            print('\nClosing...')
             server.close()
             break
+
 
 if __name__ == '__main__':
     main()
