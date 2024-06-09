@@ -52,35 +52,33 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-# read -p "Please enter ns host for Slowdns: " NS
-# echo $NS > /root/ns.txt
-# read -p "Please enter your Cloudflare Domain Name: " CF_DOMAIN_NAME
 
 register_sub_domain()
 {
 echo "Processing DNS"
 {
-NS_VAL=$(pwgen 5 1 -A -0)
-SUB_DOMAIN_VAL=$(pwgen 5 1 -A -0)
 
-if [[ "$NS_VAL" == "$SUB_DOMAIN_VAL" ]];then
-	SUB_DOMAIN_VAL=$(pwgen 5 1 -A -0)
-fi
-
-NS="${NS_VAL}.${CF_DOMAIN_NAME}"
-SUB_DOMAIN="${SUB_DOMAIN_VAL}.${CF_DOMAIN_NAME}"
-echo $NS >/root/ns.txt
-echo $SUB_DOMAIN > /root/sub_domain.txt 
+rm -rf /root/ns.txt
+rm -rf /root/sub_domain.txt 
 
 mkdir -p /etc/authorization/cf
 
 wget -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry.py"
 chmod +x /etc/authorization/cf/cf_dns_registry.py
 
-python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --subdomain $SUB_DOMAIN_VAL --type A --content $server_ip
-python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --subdomain $NS_VAL --type NS --content $SUB_DOMAIN
-
 }&>/dev/null
+
+python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --content $server_ip
+
+if [ $? -ne 0 ]; then
+    clear
+    echo "Cannot generate DNS Automatically. We will to Manual. please provide NS host"
+    echo "\n"
+    read -p "Please enter NS host for Slowdns: " NS
+    echo $NS >/root/ns.txt
+    echo "subdomain is not defined due to manual execution." > /root/sub_domain.txt 
+fi
+
 }
 
 install_require () {

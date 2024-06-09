@@ -1,6 +1,7 @@
 import requests
 import random
 import string
+import argparse
 
 def get_zone_id(domain_name, bearer_token):
     url = "https://api.cloudflare.com/client/v4/zones"
@@ -58,15 +59,22 @@ def dns_record_exists(zone_id, record_type, record_name, bearer_token):
 def generate_random_string(length=8):
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
 
+def write_result(path, dns):
+    with open(path, "w") as file:
+        file.write(dns)
+
 def create_dns_record(domain_name, record_type, record_content, bearer_token):
     # Get Zone ID
     zone_id = get_zone_id(domain_name, bearer_token)
     if not zone_id:
-        return
+        return None, None
     
     while True:
         # Generate random record name
         record_name = generate_random_string()
+        if record_type == 'NS':
+            record_name = 'ns-'+record_name
+            
         full_record_name = f"{record_name}.{domain_name}"
         
         # Check if DNS record already exists
@@ -94,16 +102,29 @@ def create_dns_record(domain_name, record_type, record_content, bearer_token):
     
     if response.status_code == 200:
         print(f"DNS record {full_record_name} created successfully")
-        return response.json()
+        return full_record_name, response.json()
     else:
         print(f"Failed to create DNS record: {response.status_code}")
         print(response.text)
-        return None
+        return None, None
 
-# Example usage
-domain_name = "example.com"
-record_type = "A"
-record_content = "123.123.123.123"
-bearer_token = "your_bearer_token_here"
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
+    parser.add_argument("--token", help="Cloudflare API token", required=True)
+    parser.add_argument("--name", help="Domain name", required=True)
+    parser.add_argument("--content", help="Content of the DNS record (IP address or name server)", required=True)
+    args = parser.parse_args()
+    
+    #-- Generating A Record
+    full_name_record, is_success = create_dns_record(args.name, 'A', args.content, args.token)
 
-create_dns_record(domain_name, record_type, record_content, bearer_token)
+    if is_success:
+        ns_record, _ = create_dns_record(args.name, 'NS', full_name_record, args.token)
+        #-- writing result
+        write_result('/root/t.ns.txt', full_name_record)
+        write_result('/root/t.sub_domain.txt ', ns_record)
+        
+        print(f"A Record: {full_name_record}")
+        print(f"NS Record: {ns_record}")
+    else: 
+        raise Exception('Error in Generating DNS Records... executing manual')
