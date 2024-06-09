@@ -1112,12 +1112,13 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/us
 * * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
 "; 
+} | crontab -
 #* * * * * /bin/bash /bin/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
 #0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/online.sh >/etc/authorization/pandavpnunite/log/hysteria_online.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/ws.sh >/etc/authorization/pandavpnunite/log/hysteria_ws.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/etc/authorization/pandavpnunite/log/hysteria_monitor.log 2>&1
-} | crontab -
+
 
 sudo systemctl restart cron
 } &>/dev/null
