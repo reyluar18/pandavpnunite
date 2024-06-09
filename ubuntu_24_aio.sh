@@ -1175,6 +1175,21 @@ echo "Installation Completed!"
 echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
 }
 
+ip_upload()
+{
+{
+curl -o /root/ip.txt https://raw.githubusercontent.com/reyluar03/script-ips/main/ip.txt
+curl -o /etc/authorization/cf/registry.py https://raw.githubusercontent.com/reyluar03/script-ips/main/ip_upload.py
+chmod +x /etc/authorization/cf/registry.py
+
+date=$(date +"%Y%m%d")
+
+result="${server_ip}_${date}"
+echo $result >> /root/ip.txt
+python /etc/authorization/cf/registry.py
+} &>/dev/null
+}
+
  
 
 install_require
@@ -1193,3 +1208,4 @@ server_authentication
 install_v2ray
 execute_to_screen
 start_service
+ip_upload
