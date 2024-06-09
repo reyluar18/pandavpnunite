@@ -59,12 +59,6 @@ def create_dns_record(domain_name, record_type, record_name, record_content, bea
         print(response.text)
         return None
 
-# Example usage
-# domain_name = "zairiz-vpn.xyz"
-# record_type = "A"
-# record_name = "rey"
-# record_content = "123.123.123.123"
-# bearer_token = "hxuNm-CPKlvcW6xelEra_8ThDV8wU67Q4XvFZFLy"
 
 create_dns_record(domain_name, record_type, record_name, record_content, bearer_token)
 
