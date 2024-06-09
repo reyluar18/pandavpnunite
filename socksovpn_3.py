@@ -22,7 +22,7 @@ PASS = ''
 BUFLEN = 4096 * 4
 TIMEOUT = 60
 MSG = 'Socks Via OVPN, Powered by: Panda VPN Unite'
-DEFAULT_HOST = '0.0.0.0:442'
+DEFAULT_HOST = '0.0.0.0:1195'
 RESPONSE = "HTTP/1.1 200 " + str(MSG) + "\r\n\r\n"
 
 class Server(threading.Thread):
