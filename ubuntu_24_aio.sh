@@ -15,8 +15,8 @@ PORT_SQUID_2='8080'
 PORT_SQUID_3='8181'
 
 #PYTHON PROXY 
-PORT_SOCKS='8081'
-PORT_WEBSOCKET='90'
+PORT_SOCKS='90'
+PORT_WEBSOCKET='8081'
 PORT_SOCKOVPN='80'
 PORT_PYPROXY='8010'
 
@@ -1128,8 +1128,8 @@ systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service  
 systemctl restart v2ray
 killall screen 
-screen -dmS socks python /etc/socks.py 8081
-screen -dmS websocket python /usr/local/sbin/websocket.py 90
+screen -dmS socks python /etc/socks.py 90
+screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS socksovpn python /usr/local/sbin/socksovpn.py 80
 screen -dmS proxy python /usr/local/sbin/proxy.py 8010
 screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 3
