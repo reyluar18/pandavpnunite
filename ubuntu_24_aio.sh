@@ -37,8 +37,8 @@ PORT_V2RAY='10000'
 
 
 #CF
-CF_TOKEN='dsadsa'
-# CF_DOMAIN_NAME='test.com'
+CF_TOKEN='hxuNm-CPKlvcW6xelEra_8ThDV8wU67Q4XvFZFLy'
+CF_DOMAIN_NAME='zairiz-vpn.xyz'
 
 timedatectl set-timezone Asia/Manila
 server_ip=$(curl -s https://api.ipify.org)
@@ -52,8 +52,8 @@ echo '#############################################
 #            owner: Pandavpnunite      	    #
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-read -p "Please enter ns host for Slowdns: " NS
-echo $NS > /root/ns.txt
+# read -p "Please enter ns host for Slowdns: " NS
+# echo $NS > /root/ns.txt
 # read -p "Please enter your Cloudflare Domain Name: " CF_DOMAIN_NAME
 
 register_sub_domain()
@@ -1162,6 +1162,17 @@ echo '#############################################
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 netstat -tupln
+alias my_dns="cat /root/ns.txt"
+alias my_ports="cat /root/.ports"
+echo "
+Panda VPN Available command for execution: 
+
+1. my_dns -> this will print your generated name server
+2. my_ports -> this will print all the available ports in Panda Server
+
+"
+echo "Installation Completed!"
+echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
 }
 
  
@@ -1176,7 +1187,7 @@ install_firewall_kvm
 install_stunnel
 install_rclocal
 install_websocket_and_socks
-# register_sub_domain
+register_sub_domain
 install_dnstt
 server_authentication
 install_v2ray

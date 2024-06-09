@@ -60,10 +60,21 @@ def create_dns_record(domain_name, record_type, record_name, record_content, bea
         return None
 
 # Example usage
-domain_name = "zairiz-vpn.xyz"
-record_type = "A"
-record_name = "rey"
-record_content = "123.123.123.123"
-bearer_token = "hxuNm-CPKlvcW6xelEra_8ThDV8wU67Q4XvFZFLy"
+# domain_name = "zairiz-vpn.xyz"
+# record_type = "A"
+# record_name = "rey"
+# record_content = "123.123.123.123"
+# bearer_token = "hxuNm-CPKlvcW6xelEra_8ThDV8wU67Q4XvFZFLy"
 
 create_dns_record(domain_name, record_type, record_name, record_content, bearer_token)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
+    parser.add_argument("--token", help="Cloudflare API token", required=True)
+    parser.add_argument("--name", help="Domain name", required=True)
+    parser.add_argument("--subdomain", help="Subdomain to register", required=True)
+    parser.add_argument("--type", help="Type of DNS record (e.g., A, CNAME, NS)", required=True)
+    parser.add_argument("--content", help="Content of the DNS record (IP address or name server)", required=True)
+    args = parser.parse_args()
+
+    create_dns_record(args.name, args.type, args.subdomain, args.content, args.token)
