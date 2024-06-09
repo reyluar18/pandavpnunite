@@ -1,36 +1,69 @@
 import requests
 
-def create_dns_record(zone_id, token, email, record_type, name, content, ttl=120, proxied=False):
-    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
+def get_zone_id(domain_name, bearer_token):
+    url = "https://api.cloudflare.com/client/v4/zones"
+    
     headers = {
-        "Authorization": f"Bearer {token}",
+        "Authorization": f"Bearer {bearer_token}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "type": record_type,
-        "name": name,
-        "content": content,
-        "ttl": ttl,
-        "proxied": proxied
+    
+    params = {
+        "name": domain_name,
+        "status": "active"
     }
-
-    response = requests.post(url, headers=headers, json=payload)
+    
+    response = requests.get(url, headers=headers, params=params)
     
     if response.status_code == 200:
+        zones = response.json().get("result", [])
+        if zones:
+            return zones[0]["id"]
+        else:
+            print(f"No active zone found for domain: {domain_name}")
+            return None
+    else:
+        print(f"Failed to fetch zone ID: {response.status_code}")
+        print(response.text)
+        return None
+
+def create_dns_record(domain_name, record_type, record_name, record_content, bearer_token):
+    # Get Zone ID
+    zone_id = get_zone_id(domain_name, bearer_token)
+    if not zone_id:
+        return
+    
+    # Create DNS record
+    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
+    
+    headers = {
+        "Authorization": f"Bearer {bearer_token}",
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "type": record_type,
+        "name": f"{record_name}.{domain_name}",
+        "content": record_content,
+        "ttl": 1,  # TTL of 1 means automatic
+        "proxied": False  # Change to True if you want to use Cloudflare's proxy
+    }
+    
+    response = requests.post(url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        print("DNS record created successfully")
         return response.json()
     else:
-        raise Exception(f"Failed to create DNS record: {response.text}")
+        print(f"Failed to create DNS record: {response.status_code}")
+        print(response.text)
+        return None
 
 # Example usage
-zone_id = "78742e227d8b6e3b033567cf7281cc04"
-token = "edffda6aca6bfeb81ac0b0ff53479cffae264"
-email = "delacruz398@gmail.com"
-record_type = "A"  # For example, A, AAAA, CNAME, etc.
-name = "rey.zairiz-vpn.xyz"
-content = "123.123.123.123"  # The IP address for an A record
+domain_name = "zairiz-vpn.xyz"
+record_type = "A"
+record_name = "rey"
+record_content = "123.123.123.123"
+bearer_token = "hxuNm-CPKlvcW6xelEra_8ThDV8wU67Q4XvFZFLy"
 
-try:
-    result = create_dns_record(zone_id, token, email, record_type, name, content)
-    print("DNS record created successfully:", result)
-except Exception as e:
-    print(e)
+create_dns_record(domain_name, record_type, record_name, record_content, bearer_token)
