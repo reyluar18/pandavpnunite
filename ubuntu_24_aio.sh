@@ -60,11 +60,11 @@ register_sub_domain()
 {
 echo "Processing DNS"
 {
-NS_VAL=$(pwgen 5 1)
-SUB_DOMAIN_VAL=$(pwgen 5 1)
+NS_VAL=$(pwgen 5 1 -A -0)
+SUB_DOMAIN_VAL=$(pwgen 5 1 -A -0)
 
 if [[ "$NS_VAL" == "$SUB_DOMAIN_VAL" ]];then
-	SUB_DOMAIN_VAL=${pwgen 5 1}
+	SUB_DOMAIN_VAL=$(pwgen 5 1 -A -0)
 fi
 
 NS="${NS_VAL}.${CF_DOMAIN_NAME}"

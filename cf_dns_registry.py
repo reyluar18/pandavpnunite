@@ -1,4 +1,5 @@
 import requests
+import argparse
 
 def get_zone_id(domain_name, bearer_token):
     url = "https://api.cloudflare.com/client/v4/zones"
@@ -59,8 +60,6 @@ def create_dns_record(domain_name, record_type, record_name, record_content, bea
         print(response.text)
         return None
 
-
-create_dns_record(domain_name, record_type, record_name, record_content, bearer_token)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
