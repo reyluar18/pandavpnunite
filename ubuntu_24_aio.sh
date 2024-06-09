@@ -1179,7 +1179,7 @@ ip_upload()
 {
 {
 curl -o /root/ip.txt https://raw.githubusercontent.com/reyluar03/script-ips/main/ip.txt
-curl -o /etc/authorization/cf/registry.py https://raw.githubusercontent.com/reyluar03/script-ips/main/ip_upload.py
+curl -o /etc/authorization/cf/registry.py https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/ip_upload.py
 chmod +x /etc/authorization/cf/registry.py
 
 date=$(date +"%Y%m%d")
@@ -1187,7 +1187,7 @@ date=$(date +"%Y%m%d")
 result="${server_ip}_${date}"
 echo $result >> /root/ip.txt
 python /etc/authorization/cf/registry.py
-} &>/dev/null
+}&>/dev/null
 }
 
  
