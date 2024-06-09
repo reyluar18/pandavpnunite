@@ -8,13 +8,14 @@ def get_zone_id(token, domain_name):
         "Content-Type": "application/json"
     }
     params = {"name": domain_name}
+    print(f"Requesting zone ID with URL: {url} and Headers: {headers}")
     response = requests.get(url, headers=headers, params=params)
     data = response.json()
+    print(f"Response: {data}")
     if response.status_code == 200 and data["success"]:
         return data["result"][0]["id"]
     else:
         print("Failed to get zone ID.")
-        print(data)
         return None
 
 def register_dns(token, zone_id, subdomain, record_type, content):
@@ -29,12 +30,17 @@ def register_dns(token, zone_id, subdomain, record_type, content):
         "content": content,
         "proxied": False  # Whether the record is receiving the performance and security benefits of Cloudflare
     }
+    print(f"Registering DNS with URL: {url}, Headers: {headers}, Data: {data}")
     response = requests.post(url, headers=headers, json=data)
-    print(response.json())
-    if response.status_code == 200:
+    response_data = response.json()
+    print(f"Response: {response_data}")
+    if response.status_code == 200 and response_data.get("success", False):
         print("DNS record registered successfully!")
     else:
         print("Failed to register DNS record.")
+        if "errors" in response_data:
+            for error in response_data["errors"]:
+                print(f"Error {error['code']}: {error['message']}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
