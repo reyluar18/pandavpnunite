@@ -185,22 +185,25 @@ go build
 cp /root/dnstt/dnstt-server/server.pub /root/dnstt/dnstt-client/server.pub
 screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:$PORT_DNSTT_SSH_CLIENT
 
-cat <<EOM > /bin/dnsttauto.sh
-sudo kill $( sudo lsof -i:$PORT_DNSTT_SERVER -t )
+echo ' 
 nsname="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
-screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
-screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $NSNAME 127.0.0.1:2222
+screen -dmS slowdns-server ~/dnstt/dnstt-server/dnstt-server -udp :PORT_DNSTT_SERVER -privkey-file ~/dnstt/dnstt-server/server.key $nsname 127.0.0.1:22
+screen -dmS slowdns-client ~/dnstt/dnstt-client/dnstt-client -dot 1.1.1.1:853 -pubkey-file ~/dnstt/dnstt-client/server.pub $nsname 127.0.0.1:PORT_DNSTT_SSH_CLIENT
+' > /bin/dnsttauto.sh
+PORT_DNSTT_SSH_CLIENT
+sed -i "s|PORT_DNSTT_SERVER|$PORT_DNSTT_SERVER|g" /bin/dnsttauto.sh
+sed -i "s|PORT_DNSTT_SSH_CLIENT|$PORT_DNSTT_SSH_CLIENT|g" /bin/dnsttauto.sh
 
-EOM
 }&>/dev/null
+
 
 
 }
 
 execute_to_screen(){
     
-cat <<EOM >/root/auto
+cat <<EOM >/bin/auto
 #!/bin/bash
 
 if nc -z localhost PORT_WEBSOCKET; then
@@ -224,12 +227,12 @@ else
     screen -dmS proxy python /usr/local/sbin/proxy.py PORT_PYPROXY
 fi
 EOM
-sed -i "s|PORT_WEBSOCKET|$PORT_WEBSOCKET|g" /root/auto
-sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /root/auto
-sed -i "s|PORT_SOCKOVPN|$PORT_SOCKOVPN|g" /root/auto
+sed -i "s|PORT_WEBSOCKET|$PORT_WEBSOCKET|g" /bin/auto
+sed -i "s|PORT_PYPROXY|$PORT_PYPROXY|g" /bin/auto
+sed -i "s|PORT_SOCKOVPN|$PORT_SOCKOVPN|g" /bin/auto
 
 
-bash /root/auto
+bash /bin/auto
 }
 
 install_squid(){
@@ -1107,13 +1110,13 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/us
 * * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection.php >/etc/authorization/pandavpnunite/log/connection.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
-* * * * * /bin/bash /root/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
-0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
+* * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
+"; 
+#* * * * * /bin/bash /bin/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
+#0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/online.sh >/etc/authorization/pandavpnunite/log/hysteria_online.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/ws.sh >/etc/authorization/pandavpnunite/log/hysteria_ws.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/monitor.sh openvpn >/etc/authorization/pandavpnunite/log/hysteria_monitor.log 2>&1
-* * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
-"; 
 } | crontab -
 
 sudo systemctl restart cron
