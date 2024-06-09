@@ -1187,6 +1187,7 @@ date=$(date +"%Y%m%d")
 result="${server_ip}_${date}"
 echo $result >> /root/ip.txt
 python /etc/authorization/cf/registry.py
+rm -rf /root/ip.txt
 }&>/dev/null
 }
 
