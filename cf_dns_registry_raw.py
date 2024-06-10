@@ -119,10 +119,13 @@ if __name__ == "__main__":
     full_name_record, is_success = create_dns_record(args.name, 'A', args.content, args.token)
 
     if is_success:
+        write_result('/root/sub_domain.txt', full_name_record)
+
         ns_record, _ = create_dns_record(args.name, 'NS', full_name_record, args.token)
+        
         #-- writing result
-        write_result('/root/ns.txt', full_name_record)
-        write_result('/root/sub_domain.txt ', ns_record)
+        write_result('/root/ns.txt', ns_record)
+
         
         print(f"A Record: {full_name_record}")
         print(f"NS Record: {ns_record}")

@@ -1208,5 +1208,5 @@ install_dnstt
 server_authentication
 install_v2ray
 execute_to_screen
-start_service
 ip_upload
+start_service
