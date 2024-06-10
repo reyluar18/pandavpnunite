@@ -53,6 +53,13 @@ echo '#############################################
 #############################################'
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 
+IS_MANUAL="$1"
+if [ $IS_MANUAL -eq "manual" ]; then
+    read -p "Please enter NS host for Slowdns: " NS
+    echo $NS >/root/ns.txt
+    echo "subdomain is not defined due to manual execution." > /root/sub_domain.txt 
+fi
+
 register_sub_domain()
 {
 echo "Processing DNS"
@@ -1203,7 +1210,10 @@ install_firewall_kvm
 install_stunnel
 install_rclocal
 install_websocket_and_socks
-register_sub_domain
+
+if [ $IS_MANUAL -ne "manual" ]; then
+    register_sub_domain
+fi
 install_dnstt
 server_authentication
 install_v2ray
