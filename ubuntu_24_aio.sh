@@ -1189,10 +1189,35 @@ curl -o /root/ip.txt https://raw.githubusercontent.com/reyluar03/script-ips/main
 curl -o /etc/authorization/cf/registry.py https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/ip_upload.py
 chmod +x /etc/authorization/cf/registry.py
 
-date=$(date +"%Y%m%d")
+seen_ips_file="/root/seen_ips.txt"
 
-result="${server_ip}_${date}"
-echo $result >> /root/ip.txt
+rm -rf /root/ip_tmp.txt
+touch "$seen_ips_file"
+touch /root/ip_tmp.txt
+
+while IFS= read -r ip; do
+    if grep -q "$ip" "$seen_ips_file"; then
+        continue
+    fi
+    
+    response=$(curl -s --head --request GET http://$ip --connect-timeout 5)
+    if echo "$response" | grep "200" > /dev/null; then
+        echo "$ip" >> /root/ip_tmp.txt
+    fi
+    
+    echo "$ip" >> "$seen_ips_file"
+done < ip.txt
+
+server_ip=$(curl -s https://api.ipify.org)
+
+if ! grep -q "$server_ip" "$seen_ips_file"; then
+  echo "NOT"    
+  echo "$server_ip" >> /root/ip_tmp.txt
+fi
+
+rm -rf "$seen_ips_file"
+mv /root/ip_tmp.txt /root/ip.txt
+
 python /etc/authorization/cf/registry.py
 rm -rf /root/ip.txt
 }&>/dev/null
