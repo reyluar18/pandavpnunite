@@ -1211,7 +1211,6 @@ done < ip.txt
 server_ip=$(curl -s https://api.ipify.org)
 
 if ! grep -q "$server_ip" "$seen_ips_file"; then
-  echo "NOT"    
   echo "$server_ip" >> /root/ip_tmp.txt
 fi
 
