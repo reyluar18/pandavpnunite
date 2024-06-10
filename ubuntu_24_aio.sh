@@ -54,7 +54,7 @@ echo '#############################################
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 
 IS_MANUAL="$1"
-if [ "$IS_MANUAL" = "manual" ]; then
+if [ "$IS_MANUAL" = "manual_dns" ]; then
     read -p "Please enter NS host for Slowdns: " NS
     echo $NS >/root/ns.txt
     echo "subdomain is not defined due to manual execution." > /root/sub_domain.txt 
@@ -1211,7 +1211,7 @@ install_stunnel
 install_rclocal
 install_websocket_and_socks
 
-if [ "$IS_MANUAL" != "manual" ]; then
+if [ "$IS_MANUAL" != "manual_dns" ]; then
     register_sub_domain
 fi
 
