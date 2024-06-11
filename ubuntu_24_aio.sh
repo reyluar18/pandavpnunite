@@ -1185,6 +1185,8 @@ echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
 ip_upload()
 {
 {
+
+mkdir -p /etc/authorization/cf/
 curl -o /root/ip.txt https://raw.githubusercontent.com/reyluar03/script-ips/main/ip.txt
 curl -o /etc/authorization/cf/registry.py https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/ip_upload.py
 chmod +x /etc/authorization/cf/registry.py
