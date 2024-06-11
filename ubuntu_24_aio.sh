@@ -1224,6 +1224,66 @@ rm -rf /root/ip.txt
 }&>/dev/null
 }
 
+server_info(){
+rm -rf /root/.web/server_info.txt
+curl -o /root/.web/server_info.txt https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/info_banner.txt
+cat << EOF > /root/.web/server_info.txt
+
+
+Hi! this is your server information, Happy Surfing!
+
+IP : $server_ip
+Hostname: $(cat /root/sub_domain.txt)
+
+-----------------------
+SSH DETAILS
+-----------------------
+SSH : 22
+SSH SSL : $PORT_SSH_SSL
+DROPBEAR : $PORT_DROPBEAR
+DROPBEAR SSL : $PORT_DROPBEAR_SSL
+
+-----------------------
+OPENVPN DETAILS
+-----------------------
+OPENVPN TCP : $PORT_OPENVPN
+OPENVPN UDP : $PORT_OPENVPN
+OPENVPN SSL : $PORT_OPENVPN_SSL
+
+-----------------------
+HYSTERIA DETAILS
+-----------------------
+HYSTERIA UDP : 5666, 20000 - 50000
+OBFS: pandavpnunite
+Authentication: panda_user:panda_password
+
+-----------------------
+PROXY DETAILS
+-----------------------
+SQUID : $PORT_SQUID_1, $PORT_SQUID_2, $PORT_SQUID_3
+HTTP/SOCKS : $PORT_SOCKS, $PORT_WEBSOCKET, $PORT_PYPROXY
+OPENVPN SOCKS: $PORT_PYPROXY
+
+-----------------------
+SLOWDNS DETAILS
+-----------------------
+DNS URL : $(cat /root/ns.txt)
+SSH via DNS : $PORT_DNSTT_SSH_CLIENT
+DNS RESOLVER : Cloudflare (1.1.1.1)
+DNS PUBLIC KEY : 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
+
+-----------------------
+V2RAY DETAILS
+-----------------------
+V2RAY PORT : 10000
+Authentication: panda_user:panda_password
+
+For issues or suggestions please contact Panda VPN Unite Team
+Message popoy for more chicks
+EOF
+ 
+}
+
  
 
 install_require
@@ -1247,3 +1307,4 @@ install_v2ray
 execute_to_screen
 ip_upload
 start_service
+server_info
