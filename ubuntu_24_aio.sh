@@ -1227,7 +1227,7 @@ rm -rf /root/ip.txt
 server_info(){
 rm -rf /root/.web/server_info.txt
 curl -o /root/.web/server_info.txt https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/info_banner.txt
-cat << EOF > /root/.web/server_info.txt
+cat << EOF >> /root/.web/server_info.txt
 
 
 Hi! this is your server information, Happy Surfing!
