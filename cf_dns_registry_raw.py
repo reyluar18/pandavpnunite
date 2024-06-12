@@ -63,15 +63,17 @@ def write_result(path, dns):
     with open(path, "w") as file:
         file.write(dns)
 
-def create_dns_record(domain_name, record_type, record_content, bearer_token):
+def create_dns_record(domain_name, record_type, record_content, bearer_token, record_name = None):
     # Get Zone ID
     zone_id = get_zone_id(domain_name, bearer_token)
     if not zone_id:
         return None, None
     
     while True:
-        # Generate random record name
-        record_name = generate_random_string()
+        # Generate random record name if not defined
+        if record_name is None:
+            record_name = generate_random_string()
+
         if record_type == 'NS':
             record_name = 'ns-'+record_name
             
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     if is_success:
         write_result('/root/sub_domain.txt', full_name_record)
 
-        ns_record, _ = create_dns_record(args.name, 'NS', full_name_record, args.token)
+        ns_record, _ = create_dns_record(args.name, 'NS', full_name_record, args.token, record_name = full_name_record.split('.')[0])
         
         #-- writing result
         write_result('/root/ns.txt', ns_record)
