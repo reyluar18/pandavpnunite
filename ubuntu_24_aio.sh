@@ -1230,8 +1230,9 @@ cat << EOF >> /root/.web/server_info.txt
 Hi! this is your server information, Happy Surfing!
 
 IP : $server_ip
-Hostname: $(cat /root/sub_domain.txt)
-DNS Resolver: $(cat /root/ns.txt)
+Hostname/Subdomain : $(cat /root/sub_domain.txt)
+DNS Resolver (DNSTT) : $(cat /root/ns.txt)
+
 
 -----------------------
 SSH DETAILS
