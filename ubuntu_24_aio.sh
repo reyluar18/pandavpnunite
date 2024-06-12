@@ -76,7 +76,7 @@ chmod +x /etc/authorization/cf/cf_dns_registry.py
 }&>/dev/null
 
 python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --content $server_ip
-$NS=$(cat /root/ns.txt) 
+NS=$(cat /root/ns.txt) 
 if [ $? -ne 0 ]; then
     clear
     echo "Cannot generate DNS Automatically. We will to Manual. please provide NS host"
