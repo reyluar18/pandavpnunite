@@ -1032,9 +1032,6 @@ echo "Installing V2RAY"
 curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
 sudo bash install-release.sh
 
-sudo systemctl enable v2ray
-sudo systemctl restart v2ray
-
 wget -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
 chmod +x /etc/authorization/pandavpnunite/v2ray.sh
 
@@ -1074,6 +1071,7 @@ cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
 /usr/bin/php /etc/authorization/pandavpnunite/connection.php
 /bin/bash /etc/authorization/pandavpnunite/v2ray.sh
 
+sudo systemctl enable v2ray
 sudo systemctl restart v2ray
 
 sudo apt install -y nginx
@@ -1136,7 +1134,7 @@ systemctl restart hysteria-server.service
 systemctl restart openvpn@server.service
 systemctl restart openvpn@server2.service  
 systemctl restart v2ray
-killall screen 
+for session in $(screen -ls | grep Detached | grep -v installer | cut -d. -f1); do screen -S "${session}" -X quit; done
 screen -dmS socks python /etc/socks.py 90
 screen -dmS websocket python /usr/local/sbin/websocket.py 8081
 screen -dmS socksovpn python /usr/local/sbin/socksovpn.py 80
