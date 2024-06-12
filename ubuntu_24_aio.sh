@@ -1231,6 +1231,7 @@ Hi! this is your server information, Happy Surfing!
 
 IP : $server_ip
 Hostname: $(cat /root/sub_domain.txt)
+DNS Resolver: $(cat /root/ns.txt)
 
 -----------------------
 SSH DETAILS
