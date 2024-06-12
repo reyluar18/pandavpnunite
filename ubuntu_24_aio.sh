@@ -1205,7 +1205,7 @@ while IFS= read -r ip; do
     fi
     
     echo "$ip" >> "$seen_ips_file"
-done < ip.txt
+done < /root/ip.txt
 
 server_ip=$(curl -s https://api.ipify.org)
 
