@@ -76,7 +76,7 @@ chmod +x /etc/authorization/cf/cf_dns_registry.py
 }&>/dev/null
 
 python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --content $server_ip
-
+$NS=$(cat /root/ns.txt) 
 if [ $? -ne 0 ]; then
     clear
     echo "Cannot generate DNS Automatically. We will to Manual. please provide NS host"
@@ -180,7 +180,6 @@ EOM
 cat <<EOM > /root/dnstt/dnstt-server/server.pub
 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
 EOM
-echo $NS > /root/ns.txt
 NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns-server ./dnstt-server -udp :$PORT_DNSTT_SERVER -privkey-file server.key $NSNAME 127.0.0.1:22
@@ -1301,8 +1300,8 @@ fi
 
 install_dnstt
 server_authentication
-install_v2ray
 execute_to_screen
 ip_upload
 start_service
 server_info
+install_v2ray
