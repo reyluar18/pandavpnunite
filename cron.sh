@@ -104,6 +104,7 @@ function encrypt_key($paswd)
 
 
 $data = '';
+$uuid = '';
 $premium_active = "status='live' AND is_freeze=0 AND is_ban=0 AND duration > 0";
 $vip_active = "status='live' AND is_freeze=0 AND is_ban=0 AND vip_duration > 0";
 $private_active = "status='live' AND is_freeze=0 AND is_ban=0 AND private_duration > 0";
@@ -117,11 +118,24 @@ if($query->num_rows > 0)
 		$password = decrypt_key($row['user_pass']);
 		$password = encryptor('decrypt',$password);		
 		$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M '.$username.''.PHP_EOL;
+
+		$uuid .= '';
+		$v2ray_id = $row['v2ray_id'];
+    if($v2ray_id != '')
+    {
+     $uuid .= ''.$v2ray_id.''.PHP_EOL;
+    }
+		
 	}
 }
 $location = '/etc/authorization/pandavpnunite/active.sh';
 $fp = fopen($location, 'w');
 fwrite($fp, $data) or die("Unable to open file!");
+fclose($fp);
+
+$location = '/etc/authorization/pandavpnunite/uuid.sh';
+$fp = fopen($location, 'w');
+fwrite($fp, $uuid) or die("Unable to open file!");
 fclose($fp);
 
 
