@@ -398,6 +398,8 @@ sed -i "s|DBUSER|$USER|g" /etc/openvpn/login/config.sh
 sed -i "s|DBPASS|$PASS|g" /etc/openvpn/login/config.sh
 sed -i "s|DBNAME|$DBNAME|g" /etc/openvpn/login/config.sh
 
+cp /etc/openvpn/login/config.sh /etc/openvpn/login/test_config.sh
+
 wget -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/auth_vpn"
 
 #client-connect file
@@ -800,7 +802,15 @@ PASSWORD=$(echo "$AUTH" | cut -d ":" -f 2)
 
 Query="SELECT user_name FROM users WHERE user_name='$USERNAME' AND auth_vpn=md5('$PASSWORD') AND status='live' AND is_freeze=0 AND is_ban=0 AND (duration > 0 OR vip_duration > 0 OR private_duration > 0)"
 user_name=`mysql -u $USER -p$PASS -D $DB -h $HOST -sN -e "$Query"`
-[ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ] && echo "user : $username" && echo 'authentication ok.' && exit 0 || echo 'authentication failed.'; exit 1
+if [ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ]; then
+    echo "user : $USERNAME"
+    echo 'authentication ok.'
+    exit 0
+else
+    . /etc/openvpn/login/test_config.sh
+    user_name=`mysql -u $USER -p$PASS -D $DB -h $HOST -sN -e "$Query"`
+    [ "$user_name" != '' ] && [ "$user_name" = "$USERNAME" ] && echo "user : $USERNAME" && echo 'authentication ok.' && exit 0 || echo 'authentication failed.'; exit 1
+fi
 EOM
 
 chmod +x /etc/hysteria/.auth.sh
@@ -1096,8 +1106,14 @@ echo "Connecting authentication to panel"
 mkdir -p /etc/authorization/pandavpnunite/log
 wget -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
 
+cp /etc/authorization/pandavpnunite/connection.php /etc/authorization/pandavpnunite/connection2.php
+sed -i "s|login/config.sh|login/test_config.sh|g" /etc/authorization/pandavpnunite/connection2.php
+
 #--- execute asap
 /usr/bin/php /etc/authorization/pandavpnunite/connection.php
+/bin/bash /etc/authorization/pandavpnunite/active.sh
+
+/usr/bin/php /etc/authorization/pandavpnunite/connection2.php
 /bin/bash /etc/authorization/pandavpnunite/active.sh
 }&>/dev/null
 }   
@@ -1113,6 +1129,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/us
 * * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/v2ray.sh >/etc/authorization/pandavpnunite/log/v2ray.log 2>&1
+* * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection2.php >/etc/authorization/pandavpnunite/log/connection2.log 2>&1
+* * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
+* * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
 "; 
 } | crontab -
 #* * * * * /bin/bash /bin/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
