@@ -70,7 +70,7 @@ rm -rf /root/sub_domain.txt
 
 mkdir -p /etc/authorization/cf
 
-wget --no-check-certificate -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry.py"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry.py"
 chmod +x /etc/authorization/cf/cf_dns_registry.py
 
 }&>/dev/null
@@ -139,15 +139,15 @@ service dropbear restart
 install_websocket_and_socks(){
 echo "Installing websocket and socks"
 {
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket_3.py -O /usr/local/sbin/websocket.py
+    wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/websocket_3.py -O /usr/local/sbin/websocket.py
     dos2unix /usr/local/sbin/websocket.py
     chmod +x /usr/local/sbin/websocket.py
 
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socksovpn_3.py -O /usr/local/sbin/socksovpn.py
+    wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socksovpn_3.py -O /usr/local/sbin/socksovpn.py
     dos2unix /usr/local/sbin/socksovpn.py
     chmod +x /usr/local/sbin/socksovpn.py
 
-    wget --no-check-certificate https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy_3.py -O /usr/local/sbin/proxy.py
+    wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/proxy_3.py -O /usr/local/sbin/proxy.py
     dos2unix /usr/local/sbin/proxy.py
     chmod +x /usr/local/sbin/proxy.py
 }&>/dev/null
@@ -276,7 +276,7 @@ echo '<!--PandaVPNUnite--><!DOCTYPE html><html lang="en"><head><meta charset="ut
 chmod 755 *
 /etc/init.d/squid start
 cd /etc || exit
-wget --no-check-certificate 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks_3.py' -O /etc/socks.py
+wget --no-check-certificate --no-cache --no-cookies 'https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/socks_3.py' -O /etc/socks.py
 dos2unix /etc/socks.py
 chmod +x /etc/socks.py
 rm /etc/apt/sources.list
@@ -400,15 +400,15 @@ sed -i "s|DBNAME|$DBNAME|g" /etc/openvpn/login/config.sh
 
 cp /etc/openvpn/login/config.sh /etc/openvpn/login/test_config.sh
 
-wget --no-check-certificate -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/auth_vpn"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/openvpn/login/auth_vpn "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/auth_vpn"
 
 #client-connect file
-wget --no-check-certificate -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/connect"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/openvpn/login/connect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/connect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/connect.sh
 
 #TCP client-disconnect file
-wget --no-check-certificate -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/disconnect"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/openvpn/login/disconnect.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/disconnect"
 
 sed -i "s|SERVER_IP|$server_ip|g" /etc/openvpn/login/disconnect.sh
 
@@ -821,13 +821,13 @@ sysctl -w net.core.rmem_max=16777216
 sysctl -w net.core.wmem_max=16777216
 
 #-- monitoring 
-wget --no-check-certificate -O /etc/hysteria/monitor.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/monitor.sh"
-wget --no-check-certificate -O /etc/hysteria/online.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/online.sh"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/hysteria/monitor.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/monitor.sh"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/hysteria/online.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/hysteria/online.sh"
 
 chmod +x /etc/hysteria/monitor.sh
 chmod +x /etc/hysteria/online.sh
 
-wget --no-check-certificate -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
+wget --no-check-certificate --no-cache --no-cookies -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/badvpn-udpgw64"
 chmod +x /usr/bin/badvpn-udpgw
 ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
 } &>/dev/null
@@ -1041,7 +1041,7 @@ echo "Installing V2RAY"
 curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
 sudo bash install-release.sh
 
-wget --no-check-certificate -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
 chmod +x /etc/authorization/pandavpnunite/v2ray.sh
 
 cat << EOF > /usr/local/etc/v2ray/default-config.json
@@ -1087,11 +1087,11 @@ sudo apt install -y nginx
 
 #-- add v2ray config default
 rm -rf /etc/nginx/conf.d/v2ray.conf
-wget --no-check-certificate -O /etc/nginx/conf.d/v2ray.conf "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-v2ray.sh" 
+wget --no-check-certificate --no-cache --no-cookies -O /etc/nginx/conf.d/v2ray.conf "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-v2ray.sh" 
 
 #--- add default 
 rm -rf /etc/nginx/sites-available/default
-wget --no-check-certificate -O /etc/nginx/sites-available/default "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-default.sh" 
+wget --no-check-certificate --no-cache --no-cookies -O /etc/nginx/sites-available/default "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-default.sh" 
 
 sudo nginx -t
 sudo systemctl enable nginx
@@ -1104,7 +1104,7 @@ server_authentication(){
 echo "Connecting authentication to panel"
 {
 mkdir -p /etc/authorization/pandavpnunite/log
-wget --no-check-certificate -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/pandavpnunite/connection.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cron.sh"
 
 cp /etc/authorization/pandavpnunite/connection.php /etc/authorization/pandavpnunite/connection2.php
 sed -i "s|login/config.sh|login/test_config.sh|g" /etc/authorization/pandavpnunite/connection2.php
@@ -1117,8 +1117,8 @@ sed -i "s|login/config.sh|login/test_config.sh|g" /etc/authorization/pandavpnuni
 /bin/bash /etc/authorization/pandavpnunite/active.sh
 
 #--- v2ray cf 
-wget --no-check-certificate -O /etc/authorization/pandavpnunite/v2ray_up.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_upload.py"
-wget --no-check-certificate -O /etc/authorization/pandavpnunite/v2ray.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_auth.sh"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/pandavpnunite/v2ray_up.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_upload.py"
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/pandavpnunite/v2ray.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_auth.sh"
 
 /usr/bin/php /etc/authorization/pandavpnunite/v2ray.php
 /usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py
