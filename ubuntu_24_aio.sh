@@ -1315,7 +1315,7 @@ cat /root/.web/server_info.txt
 echo "Installation Completed!"
 
 echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
-echo "Server info also available here: http://$server_ip/server_info.txt"
+echo "Server info also available here: http://$server_ip:5623/server_info.txt"
 
 
 rm -rf .bash_history
