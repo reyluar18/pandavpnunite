@@ -1115,6 +1115,15 @@ sed -i "s|login/config.sh|login/test_config.sh|g" /etc/authorization/pandavpnuni
 
 /usr/bin/php /etc/authorization/pandavpnunite/connection2.php
 /bin/bash /etc/authorization/pandavpnunite/active.sh
+
+#--- v2ray cf 
+wget -O /etc/authorization/pandavpnunite/v2ray_up.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_upload.py"
+wget -O /etc/authorization/pandavpnunite/v2ray.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_auth.sh"
+
+/usr/bin/php /etc/authorization/pandavpnunite/v2ray.php >/etc/authorization/pandavpnunite/log/v2ray_auth.log 2>&1
+/usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py >/etc/authorization/pandavpnunite/log/v2ray_up.log 2>&1
+
+
 }&>/dev/null
 }   
 
@@ -1132,6 +1141,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/us
 * * * * * /usr/bin/php /etc/authorization/pandavpnunite/connection2.php >/etc/authorization/pandavpnunite/log/connection2.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/active.sh >/etc/authorization/pandavpnunite/log/active.log 2>&1
 * * * * * /bin/bash /etc/authorization/pandavpnunite/not-active.sh >/etc/authorization/pandavpnunite/log/inactive.log 2>&1
+* * * * * /usr/bin/php /etc/authorization/pandavpnunite/v2ray.php >/etc/authorization/pandavpnunite/log/v2ray_auth.log 2>&1
+* * * * * /usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py >/etc/authorization/pandavpnunite/log/v2ray_up.log 2>&1
+
 "; 
 } | crontab -
 #* * * * * /bin/bash /bin/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
