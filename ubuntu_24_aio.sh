@@ -1120,8 +1120,8 @@ sed -i "s|login/config.sh|login/test_config.sh|g" /etc/authorization/pandavpnuni
 wget -O /etc/authorization/pandavpnunite/v2ray_up.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_upload.py"
 wget -O /etc/authorization/pandavpnunite/v2ray.php "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray_auth.sh"
 
-/usr/bin/php /etc/authorization/pandavpnunite/v2ray.php >/etc/authorization/pandavpnunite/log/v2ray_auth.log 2>&1
-/usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py >/etc/authorization/pandavpnunite/log/v2ray_up.log 2>&1
+/usr/bin/php /etc/authorization/pandavpnunite/v2ray.php
+/usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py
 
 
 }&>/dev/null
