@@ -2,6 +2,7 @@ import requests
 import os
 import json
 import base64
+import argparse
 
 def upload_file_to_github(token, repo_owner, repo_name, file_path, file_name):
     # Read the content of the file
@@ -57,7 +58,12 @@ repository_name = 'script-ips'
 
 # Define the local file path and name
 local_file_path = '/etc/authorization/pandavpnunite/'
-file_name = 'v2ray.txt'
 
 # Upload the file 
-upload_file_to_github(token, repository_owner, repository_name, local_file_path, file_name)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Register DNS record with Cloudflare")
+    parser.add_argument("--file_name", help="file name", required=True)
+
+    args = parser.parse_args()
+
+    upload_file_to_github(token, repository_owner, repository_name, local_file_path, args.file_name)
