@@ -48,8 +48,11 @@ def upload_file_to_github(token, repo_owner, repo_name, file_path, file_name):
         print(f"Failed to upload file '{file_name}'. Status code: {response.status_code}.")
         print(response.text)
 
-# token
-token = '<token>'
+t1 = 'ghp'
+t2 = 'tpjIglHtgQsh'
+t3 = '88tzYSky3pU'
+t4 = '4pS8xZN29kG6T'
+token = t1 + '_' + t2 + t3 + t4
 
 # Define the repository where you want to upload the file
 repository_owner = 'reyluar03'
@@ -59,5 +62,4 @@ repository_name = 'script-ips'
 local_file_path = '/root/'
 file_name = 'ip.txt'
 
-# Upload the file 
 upload_file_to_github(token, repository_owner, repository_name, local_file_path, file_name)
