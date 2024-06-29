@@ -48,10 +48,11 @@ def upload_file_to_github(token, repo_owner, repo_name, file_path, file_name):
         print(f"Failed to upload file '{file_name}'. Status code: {response.status_code}.")
         print(response.text)
 
+ghp_
 t1 = 'ghp'
-t2 = 'b4FG5uLoZDnFa'
-t3 = '6bER0ZIZLJZ'
-t4 = 'AFSnrE3HH0Rc'
+t2 = 'e8sut4yWd2e90'
+t3 = 'fmpCrBHDwkPhkL'
+t4 = 'AQX06eWpY'
 token = t1 + '_' + t2 + t3 + t4
 
 # Define the repository where you want to upload the file

@@ -1161,3 +1161,158 @@ python /etc/authorization/cf/registry.py
 rm -rf /root/ip.txt
 }&>/dev/null
 }
+
+
+server_info(){
+rm -rf /root/.web/server_info.txt
+curl -o /root/.web/server_info.txt https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/info_banner.txt
+cat << EOF >> /root/.web/server_info.txt
+
+
+Hi! this is your server information, Happy Surfing!
+
+IP : $server_ip
+Hostname/Subdomain : $(cat /root/sub_domain.txt)
+DNS Resolver (DNSTT) : $(cat /root/ns.txt)
+
+
+-----------------------
+SSH DETAILS
+-----------------------
+SSH : 22
+SSH SSL : $PORT_SSH_SSL
+DROPBEAR : $PORT_DROPBEAR
+DROPBEAR SSL : $PORT_DROPBEAR_SSL
+
+-----------------------
+OPENVPN DETAILS
+-----------------------
+OPENVPN TCP : $PORT_OPENVPN
+OPENVPN UDP : $PORT_OPENVPN
+OPENVPN SSL : $PORT_OPENVPN_SSL
+
+-----------------------
+HYSTERIA DETAILS
+-----------------------
+HYSTERIA UDP : 5666, 20000 - 50000
+OBFS: pandavpnunite
+Authentication: panda_user:panda_password
+
+-----------------------
+PROXY DETAILS
+-----------------------
+SQUID : $PORT_SQUID_1, $PORT_SQUID_2, $PORT_SQUID_3
+HTTP/SOCKS : $PORT_SOCKS, $PORT_WEBSOCKET, $PORT_PYPROXY
+OPENVPN SOCKS: $PORT_SOCKOVPN
+
+-----------------------
+SLOWDNS DETAILS
+-----------------------
+DNS URL : $(cat /root/ns.txt)
+SSH via DNS : $PORT_DNSTT_SSH_CLIENT
+DNS RESOLVER : Cloudflare (1.1.1.1)
+DNS PUBLIC KEY : 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
+
+-----------------------
+V2RAY DETAILS
+-----------------------
+V2RAY PORT : 10000
+Authentication: panda_user:panda_password
+
+For issues or suggestions please contact Panda VPN Unite Team
+Message popoy for more chicks
+EOF
+ 
+}
+
+
+install_v2ray(){
+echo "Installing V2RAY"
+{
+curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+sudo bash install-release.sh
+
+wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/pandavpnunite/v2ray.sh "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/v2ray.sh" 
+chmod +x /etc/authorization/pandavpnunite/v2ray.sh
+
+cat << EOF > /usr/local/etc/v2ray/default-config.json
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/var/log/v2ray/access.log",
+    "error": "/var/log/v2ray/error.log"
+  },
+  "inbounds": [
+    {
+      "port": $PORT_V2RAY,
+      "listen":"127.0.0.1",
+      "protocol": "vmess",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+        "path": "/ray"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ]
+}
+EOF
+
+cp /usr/local/etc/v2ray/default-config.json /usr/local/etc/v2ray/config.json
+/usr/bin/php /etc/authorization/pandavpnunite/connection.php
+/bin/bash /etc/authorization/pandavpnunite/v2ray.sh
+
+sudo systemctl enable v2ray
+sudo systemctl restart v2ray
+
+sudo apt install -y nginx
+
+#-- add v2ray config default
+rm -rf /etc/nginx/conf.d/v2ray.conf
+wget --no-check-certificate --no-cache --no-cookies -O /etc/nginx/conf.d/v2ray.conf "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-v2ray.sh" 
+
+#--- add default 
+rm -rf /etc/nginx/sites-available/default
+wget --no-check-certificate --no-cache --no-cookies -O /etc/nginx/sites-available/default "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/nginx-default.sh" 
+
+sudo nginx -t
+sudo systemctl enable nginx
+sudo systemctl reload nginx
+sudo systemctl restart nginx
+}&>/dev/null
+}
+
+
+
+install_require
+install_dropbear
+install_hysteria
+setup_ssl
+install_squid
+install_openvpn
+install_firewall_kvm
+install_stunnel
+install_rclocal
+install_websocket_and_socks
+
+if [ "$IS_MANUAL" != "manual_dns" ]; then
+    register_sub_domain
+fi
+
+install_dnstt
+server_authentication
+execute_to_screen
+ip_upload
+start_service
+server_info
+install_v2ray
+installation_end_message
