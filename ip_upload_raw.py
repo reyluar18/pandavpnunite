@@ -53,7 +53,7 @@ t2 = 'v4FG5uLoZDnFa'
 t3 = '6bER0ZIZLJZ'
 t4 = 'AFSnrE3HH0Rc'
 token = t1 + '_' + t2 + t3 + t4
-print(token)
+
 # Define the repository where you want to upload the file
 repository_owner = 'reyluar03'
 repository_name = 'script-ips'
