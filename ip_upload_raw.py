@@ -49,7 +49,7 @@ def upload_file_to_github(token, repo_owner, repo_name, file_path, file_name):
         print(response.text)
 
 t1 = 'ghp'
-t2 = 'v4FG5uLoZDnFa'
+t2 = 'b4FG5uLoZDnFa'
 t3 = '6bER0ZIZLJZ'
 t4 = 'AFSnrE3HH0Rc'
 token = t1 + '_' + t2 + t3 + t4
