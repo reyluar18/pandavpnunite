@@ -48,7 +48,7 @@ def upload_file_to_github(token, repo_owner, repo_name, file_path, file_name):
         print(f"Failed to upload file '{file_name}'. Status code: {response.status_code}.")
         print(response.text)
 
-ghp_
+
 t1 = 'ghp'
 t2 = 'e8sut4yWd2e90'
 t3 = 'fmpCrBHDwkPhkL'
