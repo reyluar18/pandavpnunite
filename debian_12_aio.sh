@@ -1292,6 +1292,42 @@ sudo systemctl restart nginx
 }
 
 
+installation_end_message(){
+cd ~ 
+
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '#############################################
+#         Authentication file system        #
+#       Setup by: Pandavpn Unite            #
+#       Server System: Panda VPN 	        #
+#            owner: Pandavpnunite      	    #
+#############################################'
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+netstat -tupln
+cd ~
+echo "alias my_dns='cat /root/ns.txt'" >> .bashrc
+echo "alias my_ports='cat /root/.ports'" >> .bashrc
+. .bashrc
+echo "
+Panda VPN Available command for execution: 
+
+1. my_dns -> this will print your generated name server
+2. my_ports -> this will print all the available ports in Panda Server
+
+"
+
+cat /root/.web/server_info.txt
+echo "Installation Completed!"
+
+echo "Please copy the below for your Domain Name Server: $(cat /root/ns.txt)"
+echo "Server info also available here: http://$server_ip:5623/server_info.txt"
+
+
+rm -rf .bash_history
+history -c;
+}
+
+
 
 install_require
 install_dropbear
