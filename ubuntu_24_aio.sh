@@ -1292,6 +1292,8 @@ EOF
 installation_end_message(){
 cd ~ 
 
+touch /etc/nologin
+
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '#############################################
 #         Authentication file system        #
