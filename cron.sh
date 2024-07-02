@@ -117,7 +117,7 @@ if($query->num_rows > 0)
 		$username = $row['user_name'];
 		$password = decrypt_key($row['user_pass']);
 		$password = encryptor('decrypt',$password);		
-		$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M -s /bin/rbash '.$username.''.PHP_EOL;
+		$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M -s /sbin/nologin '.$username.''.PHP_EOL;
 
 		$uuid .= '';
 		$v2ray_id = $row['v2ray_id'];
