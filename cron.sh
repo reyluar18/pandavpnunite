@@ -80,7 +80,7 @@ function encrypt_key($paswd)
 		$encrypt_method = "AES-256-CBC";
 		
 		$secret_key = md5('firenet philippines');
-		$secret_iv = md5('philippined firenet');
+		$secret_iv = md5('philippines firenet');
 
 		
 		$key = hash('sha256', $secret_key);
