@@ -41,8 +41,8 @@ function encrypt_key($paswd)
 	 
 	function getEncryptKey()
 	{
-		$secret_key = md5('eugcar');
-		$secret_iv = md5('sanchez');
+		$secret_key = md5('firenet');
+		$secret_iv = md5('philippines');
 		$keys = $secret_key . $secret_iv;
 		return encryptor('encrypt', $keys);
 	}
@@ -79,8 +79,8 @@ function encrypt_key($paswd)
 
 		$encrypt_method = "AES-256-CBC";
 		
-		$secret_key = md5('eugcar sanchez');
-		$secret_iv = md5('sanchez eugcar');
+		$secret_key = md5('firenet philippines');
+		$secret_iv = md5('philippined firenet');
 
 		
 		$key = hash('sha256', $secret_key);
