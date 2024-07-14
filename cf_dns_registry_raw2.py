@@ -63,7 +63,6 @@ def is_dns_alive(cname):
         else:
             return False
     except requests.RequestException as e:
-        print(f"Error checking if DNS server {cname} is alive: {str(e)}")
         return False
 
 def write_result(path, dns):
@@ -83,7 +82,7 @@ def create_dns_record(domain_name, record_type, record_content, bearer_token, re
     record_exists, record_id = dns_record_exists(zone_id, record_type, full_record_name, bearer_token)
     
     if record_exists:
-        print("record exists")
+        # print("record exists")
         # Update DNS record
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
         headers = {
@@ -107,7 +106,7 @@ def create_dns_record(domain_name, record_type, record_content, bearer_token, re
             print(response.text)
             return None, False
     else:
-        print("record not exists")
+        # print("record not exists")
         # Create DNS record
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
         headers = {
@@ -125,7 +124,7 @@ def create_dns_record(domain_name, record_type, record_content, bearer_token, re
         response = requests.post(url, headers=headers, json=data)
         
         if response.status_code == 200:
-            print(f"DNS record {full_record_name} created successfully")
+            # print(f"DNS record {full_record_name} created successfully")
             return full_record_name, True
         else:
             print(f"Failed to create DNS record: {response.status_code}")
