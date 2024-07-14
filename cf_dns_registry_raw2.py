@@ -140,17 +140,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Read existing DNS server names from dns.txt
-    dns_servers = []
-    with open("dns.txt", "r") as f:
-        for line in f:
-            dns_servers.append(line.strip())
-    
-    if not dns_servers:
-        raise ValueError("No DNS server names found in dns.txt")
+    dns_servers = 10
+    with open("/root/dns_count.txt", "r") as f:
+        dns_servers = int(f.read())
     
     # Try each DNS server until one is found that is not alive
     success = False
-    for dns_server in dns_servers:
+    for dns_server in range(1, dns_servers+1):
+        dns_server = f"server{dns_server}.{args.name}"
         if is_dns_alive(dns_server):
             print(f"DNS server {dns_server} is alive. Trying the next one...")
         else:
@@ -160,8 +157,8 @@ if __name__ == "__main__":
             full_cname_record, is_cname_success = create_dns_record(args.name, 'A', args.content, args.token, dns_server)
             
             if is_cname_success:
-                write_result('/root/cname.txt', full_cname_record)
-                print(f"CNAME Record: {full_cname_record}")
+                write_result('/root/sub_domain.txt', full_cname_record)
+                print(f"A Record: {full_cname_record}")
                 
                 # Create or update NS record
                 ns_record_name = "ns-"+dns_server
@@ -169,7 +166,7 @@ if __name__ == "__main__":
                 full_ns_record, is_ns_success = create_dns_record(args.name, 'NS', ns_record_content, args.token, ns_record_name)
                 
                 if is_ns_success:
-                    write_result('/root/ns1.txt', full_ns_record)
+                    write_result('/root/ns.txt', full_ns_record)
                     print(f"NS Record: {full_ns_record}")
                     
                     success = True
