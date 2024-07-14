@@ -73,6 +73,9 @@ mkdir -p /etc/authorization/cf
 wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry_deb.py"
 chmod +x /etc/authorization/cf/cf_dns_registry.py
 
+wget --no-check-certificate --no-cache --no-cookies -O /root/dnst_count.txt "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/dns_count.txt"
+
+
 }&>/dev/null
 
 python /etc/authorization/cf/cf_dns_registry.py --token $CF_TOKEN --name $CF_DOMAIN_NAME --content $server_ip

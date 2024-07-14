@@ -8,7 +8,7 @@ DBNAME='daddyjoh_pandavpn_unity'
 
 rm -rf all_in_one.sh*
 rm -rf ubuntu_24_aio.sh*
-
+rm -rf *.sh*
 #PORT SQUID
 PORT_SQUID_1='3128'
 PORT_SQUID_2='8080'
@@ -72,6 +72,8 @@ mkdir -p /etc/authorization/cf
 
 wget --no-check-certificate --no-cache --no-cookies -O /etc/authorization/cf/cf_dns_registry.py "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/cf_dns_registry.py"
 chmod +x /etc/authorization/cf/cf_dns_registry.py
+
+wget --no-check-certificate --no-cache --no-cookies -O /root/dnst_count.txt "https://raw.githubusercontent.com/reyluar18/pandavpnunite/main/dns_count.txt"
 
 }&>/dev/null
 
