@@ -1047,8 +1047,13 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/us
 * * * * * /usr/bin/php /etc/authorization/pandavpnunite/v2ray.php >/etc/authorization/pandavpnunite/log/v2ray_auth.log 2>&1
 * * * * * /usr/bin/python /etc/authorization/pandavpnunite/v2ray_up.py --file_name v2ray.txt >/etc/authorization/pandavpnunite/log/v2ray_up.log 2>&1
 
+@reboot /bin/bash /usr/local/sbin/startup.sh
+
 "; 
 } | crontab -
+
+wget --no-check-certificate --no-cache --no-cookies -O /usr/local/sbin/startup.sh "https://raw.githubusercontent.com/scripts-release/vpn-server/main/startup.sh" 
+
 #* * * * * /bin/bash /bin/auto >/etc/authorization/pandavpnunite/log/auto.log 2>&1
 #0 * * * * /bin/bash /bin/dnsttauto.sh >/etc/authorization/pandavpnunite/log/dnsttauto.log 2>&1
 # * * * * * /bin/bash /etc/hysteria/online.sh >/etc/authorization/pandavpnunite/log/hysteria_online.log 2>&1
