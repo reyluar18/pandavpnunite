@@ -116,9 +116,9 @@ if($query->num_rows > 0)
 		$data .= '';
 		$username = $row['user_name'];
 		$password = decrypt_key($row['user_pass']);
-		$password = encryptor('decrypt',$password);		
-		$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M -s /sbin/nologin '.$username.''.PHP_EOL;
-
+		$password = encryptor('decrypt',$password);	
+		#$data .= 'useradd -p $(openssl passwd -1 '.$password.') -M -s /sbin/nologin '.$username.''.PHP_EOL;
+		$data .= 'id ' . $username . ' &>/dev/null && echo ' . $username . ':' . $password . ' | chpasswd || useradd -p $(openssl passwd -1 ' . $password . ') -M -s /sbin/nologin ' . $username . PHP_EOL;
 		$uuid .= '';
 		$v2ray_id = $row['v2ray_id'];
     if($v2ray_id != '')
@@ -133,17 +133,17 @@ $fp = fopen($location, 'w');
 fwrite($fp, $data) or die("Unable to open file!");
 fclose($fp);
 
-$location = '/etc/authorization/pandavpnunite/uuid.sh';
-$fp = fopen($location, 'w');
-fwrite($fp, $uuid) or die("Unable to open file!");
-fclose($fp);
+# $location = '/etc/authorization/pandavpnunite/uuid.sh';
+# $fp = fopen($location, 'w');
+# fwrite($fp, $uuid) or die("Unable to open file!");
+# fclose($fp);
 
 
 #In-Active and Invalid Accounts
 $data2 = '';
-$premium_deactived = "duration <= 0";
-$vip_deactived = "vip_duration <= 0";
-$private_deactived = "private_duration <= 0";
+$premium_deactived = "is_validated=0 OR is_freeze=1 OR is_ban=1 OR duration <= 0";
+$vip_deactived = "is_validated=0 OR is_freeze=1 OR is_ban=1 OR vip_duration <= 0";
+$private_deactived = "is_validated=0 OR is_freeze=1 OR is_ban=1 OR private_duration <= 0";
 
 $query2 = $mysqli->query("SELECT * FROM users WHERE ".$premium_deactived."");
 if($query2->num_rows > 0)
